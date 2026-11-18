@@ -1,0 +1,104 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read          # nothing else, anywhere in this file
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+defaults:
+  run:
+    shell: bash
+jobs:
+  tests:
+    name: tests (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+        python: ["3.10", "3.12", "3.13"]     # 3.10 = documented minimum
+        include:
+          - {os: ubuntu-22.04, python: "3.10"}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: {python-version: "${{ matrix.python }}"}
+      - name: Install Tesseract (Linux only; the integration test skips itself elsewhere)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng tesseract-ocr-chi-sim
+      - name: Guard tests (fails if fewer than MIN_TESTS ran; py3.10 exits 0 on zero tests)
+        working-directory: guard
+        env: {MIN_TESTS: '884'}    # real count on 2026-11-18; raise when tests are added
+        run: |
+          python -I -B -m unittest discover -s tests -t . -v 2>&1 | tee ../unittest.log
+          n=$(sed -n 's/^Ran \([0-9][0-9]*\) test.*/\1/p' ../unittest.log | tail -n 1)
+          [ -n "$n" ] && [ "$n" -ge "$MIN_TESTS" ] || { echo "only ${n:-0} tests ran (need $MIN_TESTS)"; exit 1; }
+      - name: Bench attack-set tests    # verify locally first: one test needs a venv (parquet); it should skip, not fail
+        env: {MIN_TESTS: '89'}     # real count on 2026-11-18
+        run: |
+          python -I -B -m unittest discover -s bench/attacks -p "test_*.py" -v 2>&1 | tee unittest-bench.log
+          n=$(sed -n 's/^Ran \([0-9][0-9]*\) test.*/\1/p' unittest-bench.log | tail -n 1)
+          [ -n "$n" ] && [ "$n" -ge "$MIN_TESTS" ] || { echo "only ${n:-0} tests ran (need $MIN_TESTS)"; exit 1; }
+      - name: Bench self-test
+        run: python -I -B bench/agent_bench_test.py
+      - name: Validate attack cases
+        run: python -I -B bench/attacks/validate_cases.py bench/attacks/cases
+      - name: Preflight starts
+        working-directory: guard
+        run: python -I -B tools/preflight.py --help
+  lint:
+    name: lint (stdlib only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: {python-version: "3.12"}
+      - name: Byte-compile everything (syntax errors)
+        run: python -I -B -m compileall -q guard bench
+      - name: No binaries, databases, keys or env files tracked
+        run: |
+          bad=$(git ls-files | grep -Ei '\.(pyc|exe|dll|so|zip|sqlite3?|db|pem|key|p12|pfx|jks|kdbx|parquet)$|(^|/)(\.env|\.netrc|id_rsa|id_ed25519|id_ecdsa|credentials[^/]*\.json)' || true)
+          if [ -n "$bad" ]; then echo "tracked files that should not be public:"; echo "$bad"; exit 1; fi
+      # Optional later: ruff, pinned in requirements-ci.txt with hashes.
+  leak-scan:
+    name: leak scan (generic)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: {python-version: "3.12"}
+      - name: leakcheck, generic patterns only (no private list exists on the runner)
+        run: python -I -B tools/leakcheck.py . --no-allowlist --git-tracked
+  dependency-review:
+    name: dependency review (PRs only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: never     # a PR comment would need pull-requests: write
+  # One gate job, so the ruleset needs only ONE required check name (matrix names then can change freely).
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [tests, lint, leak-scan, dependency-review]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: All required jobs passed
+        run: |
+          [ "${{ needs.tests.result }}" = success ] && [ "${{ needs.lint.result }}" = success ] && [ "${{ needs.leak-scan.result }}" = success ] && { [ "${{ needs.dependency-review.result }}" = success ] || [ "${{ needs.dependency-review.result }}" = skipped ]; }   # skipped only on push/dispatch

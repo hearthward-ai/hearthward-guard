@@ -1,0 +1,5 @@
+# LF everywhere, also in git archive on Windows (lab re-test 2 bug 11)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pyc binary

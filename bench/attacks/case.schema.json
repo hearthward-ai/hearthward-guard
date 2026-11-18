@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "attack-case-v1",
+  "title": "Guard attack test case (v1)",
+  "description": "One line of a bench/attacks/cases/*.jsonl file. validate_cases.py enforces this schema plus the cross-field rules in CASE-FORMAT.md (split hash, hard-negative rules, licence policy, id uniqueness).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "category", "lang", "channel", "expected", "hard_negative", "source", "split"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.:-]{2,120}$"},
+    "group": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.:-]{2,120}$",
+      "description": "Variants of one idea share a group so they land in the same split."},
+    "category": {"enum": ["direct_override", "fake_markers", "encoding", "hidden_chars", "lookalike",
+      "split_instruction", "tool_smuggling", "image_ocr_scam", "scam_text", "output_leak", "hard_negative"]},
+    "mimics": {"enum": ["direct_override", "fake_markers", "encoding", "hidden_chars", "lookalike",
+      "split_instruction", "tool_smuggling", "image_ocr_scam", "scam_text", "output_leak"],
+      "description": "Required when category is hard_negative: the attack category this benign case resembles."},
+    "lang": {"enum": ["en", "zh", "mixed"]},
+    "channel": {"enum": ["text", "attachment", "tool_result", "image_ocr", "multi_turn", "output"]},
+    "payload": {
+      "oneOf": [
+        {"type": "string", "minLength": 1, "maxLength": 65536},
+        {"type": "array", "minItems": 2, "maxItems": 50, "items": {
+          "type": "object", "additionalProperties": false, "required": ["role", "text"],
+          "properties": {
+            "role": {"enum": ["user", "assistant", "tool", "attachment"]},
+            "text": {"type": "string", "maxLength": 65536}}}}
+      ]
+    },
+    "generator": {
+      "type": "object", "additionalProperties": false, "required": ["name", "seed"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"},
+        "seed": {"type": "integer", "minimum": 0},
+        "params": {"type": "object"}}
+    },
+    "attachment_name": {"type": "string", "maxLength": 200},
+    "expected": {
+      "type": "object", "additionalProperties": false, "required": ["verdict"],
+      "properties": {
+        "verdict": {"enum": ["block", "hold", "allow"]},
+        "threshold": {"enum": ["hold", "warn", "pass"]},
+        "scam_level": {"enum": ["none", "warn", "high"]},
+        "gatehouse": {"enum": ["strip", "withhold", "pass"]}}
+    },
+    "hard_negative": {"type": "boolean"},
+    "source": {
+      "type": "object", "additionalProperties": false, "required": ["name", "licence", "attribution"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "pattern": "^https://"},
+        "revision": {"type": "string"},
+        "licence": {"type": "string", "minLength": 1, "description": "SPDX id, e.g. Apache-2.0, MIT, CC-BY-4.0."},
+        "attribution": {"type": "string", "minLength": 1},
+        "original_id": {"type": "string"}}
+    },
+    "optimistic": {"type": "boolean",
+      "description": "True for own cases written after the rule they test existed (reported separately as optimistic)."},
+    "split": {"enum": ["dev", "test"]},
+    "notes": {"type": "string", "maxLength": 2000}
+  }
+}

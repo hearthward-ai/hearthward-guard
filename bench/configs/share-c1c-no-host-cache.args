@@ -1,0 +1,14 @@
+# Table 5, "C1c": production with the host-RAM prompt cache turned off (--cache-ram 0). Build 11026 keeps up to
+# 8192 MiB of evicted prompt state in host RAM by default, so production "C1" already has it on.
+-m ${MODEL}
+--port ${PORT}
+-c 262144
+-np 1
+-t 5
+-tb 5
+--fit on
+--fit-target 1024
+-ub 2048
+--reasoning-budget 4096
+--cache-ram 0
+--sleep-idle-seconds 300

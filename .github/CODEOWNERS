@@ -1,0 +1,5 @@
+# Auto-requests the maintainer's review on every pull request. (Not enforced as a ruleset gate while there is one maintainer.)
+*                          @TonyC115
+/.github/                  @TonyC115
+/tools/                    @TonyC115
+/guard/hearthward_guard/   @TonyC115

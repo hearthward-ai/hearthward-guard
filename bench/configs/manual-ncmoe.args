@@ -1,0 +1,13 @@
+# Table 3, row "manual": for builds or readers without --fit. All layers on the GPU, the expert weights of the
+# first ${NCMOE} layers on the CPU. Raise ${NCMOE} until the server's shared GPU memory stops growing (no spill).
+-m ${MODEL}
+--port ${PORT}
+-c ${CTX}
+-np 1
+-t 5
+-tb 5
+--fit off
+-ngl 99
+--n-cpu-moe ${NCMOE}
+-ub 2048
+--sleep-idle-seconds 300

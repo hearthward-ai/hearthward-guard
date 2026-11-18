@@ -1,0 +1,15 @@
+# Production recipe (Table 1, Table 2, Table 4): Qwen3.6-35B-A3B Q4_K_M, full native context, one slot.
+# --fit places as many layers/experts on the GPU as fit while leaving --fit-target MiB free.
+# No custom chat template is shipped with this kit: delete the --chat-template-file line to use the model's own template.
+-m ${MODEL}
+--port ${PORT}
+-c 262144
+-np 1
+-t 5
+-tb 5
+--fit on
+--fit-target 1024
+-ub 2048
+--reasoning-budget 4096
+--chat-template-file ${TEMPLATE}
+--sleep-idle-seconds 300

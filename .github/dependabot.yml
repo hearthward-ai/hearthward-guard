@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions     # keeps the pinned SHAs and their "# vX" comments current
+    directory: /
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 5
+    cooldown: {default-days: 7}     # never propose a release younger than 7 days (hijacked-release window)
+    groups:
+      actions: {patterns: ["*"]}
+  # Add a pip block only if a requirements file ever appears (the guard is stdlib only today).

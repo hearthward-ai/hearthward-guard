@@ -1,0 +1,13 @@
+# Table 3, row "q8_0": 8-bit KV cache (about half the KV memory) at context ${CTX}.
+-m ${MODEL}
+--port ${PORT}
+-c ${CTX}
+-np 1
+-t 5
+-tb 5
+--fit on
+--fit-target 1024
+-ub 2048
+-ctk q8_0
+-ctv q8_0
+--sleep-idle-seconds 300

@@ -1,0 +1,11 @@
+# Table 3, row "f16": default KV cache type at context ${CTX} (8192 / 32768 / 65536 / 131072 / 262144).
+-m ${MODEL}
+--port ${PORT}
+-c ${CTX}
+-np 1
+-t 5
+-tb 5
+--fit on
+--fit-target 1024
+-ub 2048
+--sleep-idle-seconds 300

@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "checked": "2026-11-16",
+  "note": "Pinned candidate public datasets. Sources 1-5 approved by the maintainer 2026-11-17 for local testing; tensor-trust stays denied. fetch.py refuses any source whose 'approved' is false. sha256 = exact file hash (HF LFS / PyPI); git_blob_sha1 = GitHub blob id at the pinned commit (sha256 is then recorded in the cache's MANIFEST.lock.json on first fetch).",
+  "sources": [
+    {
+      "id": "deepset-prompt-injections",
+      "status": "candidate",
+      "approved": true,
+      "approved_by": "approved by the maintainer 2026-11-17 (fetch for local testing)",
+      "licence": "Apache-2.0",
+      "licence_note": "Card front matter says apache-2.0; its dataset_info block also says cc-by-4.0. Both allow redistribution with attribution.",
+      "page": "https://huggingface.co/datasets/deepset/prompt-injections",
+      "revision": "4f61ecb038e9c3fb77e21034b22511b523772cdd",
+      "files": [
+        {"url": "https://huggingface.co/datasets/deepset/prompt-injections/resolve/4f61ecb038e9c3fb77e21034b22511b523772cdd/data/train-00000-of-00001-9564e8b05b4757ab.parquet",
+         "dest": "deepset-prompt-injections/train.parquet", "size": 40323,
+         "sha256": "2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04"},
+        {"url": "https://huggingface.co/datasets/deepset/prompt-injections/resolve/4f61ecb038e9c3fb77e21034b22511b523772cdd/data/test-00000-of-00001-701d16158af87368.parquet",
+         "dest": "deepset-prompt-injections/test.parquet", "size": 10892,
+         "sha256": "39ac797cabc157eeed58435a08593b2952bb6cb16fc394a2d383f447cc7b246e"}
+      ]
+    },
+    {
+      "id": "lakera-gandalf-ignore-instructions",
+      "status": "candidate",
+      "approved": true,
+      "approved_by": "approved by the maintainer 2026-11-17 (fetch for local testing)",
+      "licence": "MIT",
+      "licence_note": "Card licence MIT. Citation requested: Gandalf the Red (arXiv 2501.07927).",
+      "page": "https://huggingface.co/datasets/Lakera/gandalf_ignore_instructions",
+      "revision": "04737b65e90a6794ec227012e4a255a7def6344b",
+      "files": [
+        {"url": "https://huggingface.co/datasets/Lakera/gandalf_ignore_instructions/resolve/04737b65e90a6794ec227012e4a255a7def6344b/data/train-00000-of-00001-ded53be747ff55cd.parquet",
+         "dest": "lakera-gandalf/train.parquet", "size": 36715,
+         "sha256": "5b6acf3e5a5998d21f8e1222bb45bbdec25a14408747b1cd63bebef4a75fa439"},
+        {"url": "https://huggingface.co/datasets/Lakera/gandalf_ignore_instructions/resolve/04737b65e90a6794ec227012e4a255a7def6344b/data/validation-00000-of-00001-94481a2a09ff2fff.parquet",
+         "dest": "lakera-gandalf/validation.parquet", "size": 7464,
+         "sha256": "f51ab3e3407a368845b0f57932cc745c09280429416d7507bd178a16326a79f6"},
+        {"url": "https://huggingface.co/datasets/Lakera/gandalf_ignore_instructions/resolve/04737b65e90a6794ec227012e4a255a7def6344b/data/test-00000-of-00001-bc92128b9288a6d1.parquet",
+         "dest": "lakera-gandalf/test.parquet", "size": 7336,
+         "sha256": "56b646d133335ebc535266bd55dbe1b5bee7caa4b95bf49d040684b9b5dd9972"}
+      ]
+    },
+    {
+      "id": "spml-chatbot-prompt-injection",
+      "status": "candidate",
+      "approved": true,
+      "approved_by": "approved by the maintainer 2026-11-17 (fetch for local testing)",
+      "licence": "MIT",
+      "licence_note": "Card licence MIT. Authors state Tensor Trust-derived prompts were NOT released (not licensed for distribution). Cite arXiv 2402.11755.",
+      "page": "https://huggingface.co/datasets/reshabhs/SPML_Chatbot_Prompt_Injection",
+      "revision": "02ce8084e979bc7d4c24ee35d22ecb7f2db96ff5",
+      "files": [
+        {"url": "https://huggingface.co/datasets/reshabhs/SPML_Chatbot_Prompt_Injection/resolve/02ce8084e979bc7d4c24ee35d22ecb7f2db96ff5/spml_prompt_injection.csv",
+         "dest": "spml/spml_prompt_injection.csv", "size": 29051327,
+         "sha256": "4ca6590cd8ec10832fcebee5e243acb32be5c3e79b7a260f8638eed738c784f8"}
+      ]
+    },
+    {
+      "id": "agentdojo",
+      "status": "candidate",
+      "approved": true,
+      "approved_by": "approved by the maintainer 2026-11-17 (fetch for local testing)",
+      "licence": "MIT",
+      "licence_note": "GitHub licence MIT; PyPI classifier MIT. Wheel is kept as a zip; never installed or imported. Tag v0.1.35 = commit a75aba7631d3ca5fb7ab938965c97ead2f9ff84b.",
+      "page": "https://github.com/ethz-spylab/agentdojo",
+      "revision": "v0.1.35",
+      "files": [
+        {"url": "https://files.pythonhosted.org/packages/ca/a0/371be72fdd08bbae0c3c5cd22e6b35390f35c9cbe189d14b72e49058bd4b/agentdojo-0.1.35-py3-none-any.whl",
+         "dest": "agentdojo/agentdojo-0.1.35-py3-none-any.whl", "size": 192363,
+         "sha256": "364bea4219716b716bf639f504d195943f7f6a5535d312ca41d7098704a2affd"}
+      ]
+    },
+    {
+      "id": "bipia",
+      "status": "candidate",
+      "approved": true,
+      "approved_by": "approved by the maintainer 2026-11-17 (fetch for local testing)",
+      "licence": "MIT",
+      "licence_note": "Repo LICENSE is MIT (GitHub shows 'Other' because of NOTICE.md). Only attack files + email contexts are listed. Skipped: table (WikiTableQuestions, CC-BY-SA-4.0), qa and abstract (third-party licences, must be regenerated). Repo archived.",
+      "page": "https://github.com/microsoft/BIPIA",
+      "revision": "a004b69ec0dd446e0afd461d98cb5e96e120a5d0",
+      "files": [
+        {"url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_train.json",
+         "dest": "bipia/text_attack_train.json", "size": 5999, "git_blob_sha1": "190918308f4ef25d5f43d7c1b118bf3fe5dc61d2"},
+        {"url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_test.json",
+         "dest": "bipia/text_attack_test.json", "size": 6322, "git_blob_sha1": "259e58a7aaf696ecddbf664022c0f254318b0a05"},
+        {"url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_train.json",
+         "dest": "bipia/code_attack_train.json", "size": 16343, "git_blob_sha1": "c9bbd9a3a7dfaebe75eac83b26cb7ddf62c1821b"},
+        {"url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_test.json",
+         "dest": "bipia/code_attack_test.json", "size": 16356, "git_blob_sha1": "5c55000d29c51c4349b01e68b262de6855bf0fa8"},
+        {"url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/email/train.jsonl",
+         "dest": "bipia/email_train.jsonl", "size": 31586, "git_blob_sha1": "af3dcdf34e6a09ac82a8f40684c42541ee8c7aac"},
+        {"url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/email/test.jsonl",
+         "dest": "bipia/email_test.jsonl", "size": 30334, "git_blob_sha1": "ad8f5aeb3f7ab665fe9d3efdb345476ad4338e20"}
+      ]
+    },
+    {
+      "id": "tensor-trust",
+      "status": "denied",
+      "approved": false,
+      "licence": "NONE",
+      "licence_note": "Data repo has no licence file (all rights reserved by default); the SPML authors say it is not licensed for distribution. Code repo is BSD-2-Clause but that does not cover the data. Do not fetch unless the authors grant a licence.",
+      "page": "https://github.com/HumanCompatibleAI/tensor-trust-data",
+      "revision": "747a75e096761ebc01bd3970158827326b4add23",
+      "files": []
+    }
+  ]
+}

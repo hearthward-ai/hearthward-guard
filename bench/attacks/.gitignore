@@ -1,0 +1,4 @@
+# Local-only data never belongs in the repo (it lives in ~/Hearthward-Data).
+local/
+__pycache__/
+*.pyc
