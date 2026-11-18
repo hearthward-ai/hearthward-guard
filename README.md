@@ -1,4 +1,4 @@
-# Hearthward guard
+﻿# Hearthward guard
 
 Hearthward is a hobby project: a private AI assistant that runs on your own computer, for you or your
 family, for planning and everyday personal help (calendar, messages, deadlines). This repository holds its
@@ -26,7 +26,7 @@ Pictures can also be read (Tesseract OCR) and checked for common scam signs, in 
 
 ## Status
 
-Pre-release (guard 0.9.2). It has been developed and tested against Hermes Agent 0.23.1 (`requires_hermes`
+Pre-release (guard 0.9.3). It has been developed and tested against Hermes Agent 0.23.1 (`requires_hermes`
 in `plugin.yaml`) on one setup, and the tests use stand-ins for Hermes, not a live gateway. Expect rough edges.
 
 ## Run the tests

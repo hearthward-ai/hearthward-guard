@@ -30,8 +30,10 @@ class CallBudget:
             q.popleft()
         return sum(n for _t, n in q)
 
-    def charge(self, key: str, n: int) -> bool:
-        """Book n calls for `key` (a non-owner sender). False = over budget, nothing booked."""
+    def charge(self, key: str, n: int, count_refusal: bool = True) -> bool:
+        """Book n calls for `key` (a non-owner sender). False = over budget, nothing booked.
+        count_refusal False: a refusal is not counted in `refused` (a declined tamper retry is a tamper
+        hold, not a message "held over budget")."""
         if n <= 0:
             return True
         now = self.clock()
@@ -44,7 +46,8 @@ class CallBudget:
             else:
                 self._keys.move_to_end(key)
             if self._used(q, now) + n > self.per_sender or self._used(self._all, now) + n > self.overall:
-                self.refused += 1
+                if count_refusal:
+                    self.refused += 1
                 return False
             q.append((now, n))
             self._all.append((now, n))

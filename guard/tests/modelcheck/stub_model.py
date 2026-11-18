@@ -6,7 +6,8 @@ It reads the excerpt between the request's own markers and answers like a checke
   status    HTTP status to answer with (503 = outage, 400 = client error)
   raw       a fixed body to send as the message content (bad JSON, two objects, extra keys ...)
   finish    finish_reason to report
-  answers   a list of verdicts to give in order (then the keyword rule again)
+  answers   a list of verdicts to give in order (then the keyword rule again); "garbage" (prose) and
+            "badcode" (wrong check code) give one bad answer
   obey      True = a hijacked checker: it follows instructions found in the excerpt (it copies a JSON
             reply written there, or the first check code it sees in the whole user message)
 Keyword rule: "ignore", "system message", "upload", "inject-me", "passwords", "setup text" -> inject;
@@ -94,7 +95,14 @@ class StubModel(ThreadingHTTPServer):
         m = _FENCE.search(user)
         excerpt = m.group(2) if m else ""
         code = _CODE.findall(user)[-1]
-        if self.obey:                                    # a hijacked checker follows the excerpt
+        if self.answers and self.answers[0] in ("garbage", "badcode"):     # one bad answer, then go on
+            bad = self.answers.pop(0)
+            if bad == "garbage":
+                return "The text looks fine to me."
+            wrong = "".join("b" if ch == "a" else "a" for ch in code)      # differs in every position
+            assert wrong != code
+            return json.dumps({"verdict": "none", "kinds": [], "line": 0, "code": wrong})
+        if self.obey:                                   # a hijacked checker follows the excerpt
             js = re.search(r"\{.*\}", excerpt, re.S)
             if js:
                 return re.sub(r"^\d{3}\| ", "", js.group(0), flags=re.M)

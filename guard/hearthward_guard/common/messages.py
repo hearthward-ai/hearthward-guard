@@ -153,6 +153,8 @@ PICTURE = {
                            "the message on. The owner has been told."),
         "held_unchecked": ("Your picture can't be checked right now, so I didn't pass the message on. The owner "
                            "has been told."),
+        "held_partial": ("Your picture has too much text to check in full, so I didn't pass the message on. The "
+                         "owner has been told."),
         "owner_alert": ("Scam warning: {who} in {where} sent a picture that looks like a scam ({reasons}). It was "
                         "not passed to the assistant, and the sender was warned."),
         "sep": "; ",
@@ -168,6 +170,7 @@ PICTURE = {
         "held_unreadable": "您的图片没能读出来（{reason}），所以这条消息没有转给助手。已经通知了管理人。",
         "held_injection": "您图片里的文字试图给助手下指令，所以这条消息没有转给助手。已经通知了管理人。",
         "held_unchecked": "您的图片现在没法检查，所以这条消息没有转给助手。已经通知了管理人。",
+        "held_partial": "您图片里的文字太多，没法全部检查，所以这条消息没有转给助手。已经通知了管理人。",
         "owner_alert": ("防骗提醒：{where}里的{who}发来一张很像诈骗的图片（{reasons}）。图片没有转给助手，"
                         "也已经提醒了发送人。"),
         "sep": "；",

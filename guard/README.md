@@ -27,6 +27,28 @@ Settings live under `plugins.entries.hearthward-guard.settings`. The full refere
   which catches clumsy hijacks. A text that talks the checker into answering "none" and copying the
   code passes that test. Words aimed at a checker add a weak sign, but rewordings get past it. The
   model check lowers the risk; it is not proof.
+- **A bad checker answer is held.** An answer that is not in the agreed shape (wrong check code, not one
+  JSON object, cut off) counts as a hijacked checker, and the item is held without a retry.
+  `second_check.tamper_retry: true` (off by default) allows ONE retry per message with a fresh code, only
+  when the rules saw no sign at all and one more call fits the budget; a reply that asks for a tool is
+  never retried, and a second bad answer is held. Turning it on gives a hijack a second try, aimed at
+  exactly the texts the rules cannot see, so it is **not recommended**: leave it off.
+- **Taking back your own message is not an attack.** Since prompt revision 3 (`prompt_id` `r3-...`) the
+  checker is told that an explicit first-person retraction with nothing else asked ("ignore my last
+  message, that was a typo", "我上一条发错了，请忽略") is fine. Without "my"/"我" ("ignore the previous
+  one", "忽略上一条") outside content is at least suspicious, and when any inject rule applies (telling
+  an AI what to do or how to summarise, a fake system message, a request for data) it is inject.
+- **A lone "suspicious" answer taints inbound text; it does not hold it.** When the checker answers
+  `suspicious` and the rules saw nothing, a quote or a file someone sends is passed on, and that turn
+  is marked tainted, so Knock's taint rule blocks risky tools in it. A tool result (a web page or an
+  email the agent fetched itself) with the same answer is withheld (`threshold.weak_action_content`).
+  The reason: `weak_action_content` acts on rule signs, and a checker-only sign on inbound text counts
+  like a chat sign (`weak_action`). Option, not built: count a `suspicious` answer from the content
+  check as a content sign, so `weak_action_content: hold` also holds those quotes and files (more
+  holds on ordinary forwarded text).
+- **Fake system headers.** "【系统消息】", "系统通知：" and "System notice:" lines are a weak sign alone
+  (shops and chat apps print them); with an approval claim or words about the assistant or its rules on
+  the same line they are a medium sign, which holds attached or fetched text.
 
 ## Pictures: the scam shield
 
@@ -50,8 +72,11 @@ number are not called scams (a fixed set of everyday zh/en examples is a test ga
 with a clickable link gets "some warning signs".
 
 Text aimed at the AI, or a picture that cannot be read (a reader failure, a timeout, an unknown or
-oversized file), is **held** for the owner like any other hold. When the model check is down, paused or
-busy, the sender is told the picture "can't be checked right now". `follow <id>` passes the picture's
+oversized file), is **held** for the owner like any other hold. Text stored in the file itself is held
+on ONE weak sign (a role marker such as `assistant:`, many invisible or tag characters): ordinary picture files have no
+reason to address an AI, while other attached text needs two. When the model check is down, paused or
+busy, the sender is told the picture "can't be checked right now"; when the picture had too much text to
+double-check in full, that it "has too much text to check in full". `follow <id>` passes the picture's
 text on as data; the picture itself is never passed on. File reading, metadata and the engine run off
 the gateway's event loop, in a small pool with one deadline; text stored in the file is read within a
 fixed budget (characters, bytes inflated, items), so a crafted file cannot make the guard work for long.
@@ -108,6 +133,21 @@ already carry outside text. To clear it, the owner starts a fresh conversation i
 (Hermes asks to confirm with `/approve`). New chats after the restart are not affected.
 
 ## Version
+
+0.9.3 (2026-11-18): fixes from the 0.9.2 lab run. A picture held only because its text was too long to
+double-check in full now tells the sender so (en/zh), instead of "tries to give the assistant
+instructions". One weak sign in text stored inside a picture file (EXIF, XMP, PNG text, JPEG comment)
+now holds the picture. The inject canary probe is reworded without a hide-from-user phrase, so the
+Hermes plugin scanner rates the plugin "safe" again (still answered `inject` by the local model).
+Checker prompt revision 3 (`r3-...`): an explicit first-person retraction of the writer's own message is
+not an attack; inject rules win, and content rule 8 covers summary steering. Fake system header rules.
+A lone checker "suspicious" on inbound text taints the turn instead of holding it (documented above).
+Invisible and tag characters in picture metadata are kept for the scan (they were blanked), and XMP
+packet framing is no longer read as text. New opt-in `second_check.tamper_retry` (off by default, not
+recommended): one retry after a bad checker answer. The
+`ocr` setting description in `plugin.yaml` no longer says pictures never reach the model: in enforce
+mode that holds while the reader is on or `threshold.unscanned_media` is `hold` (the default), not with
+`owners` or `allow` and no reader, and not in report mode.
 
 0.9.2 (2026-11-17): model-check prompt revision 1 (`prompt_id` `r1-...`: the checker is asked for
 one-line JSON, to cut its answer time), preflight `OCR:` line, fictional phone numbers in every test

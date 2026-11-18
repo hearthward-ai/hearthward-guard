@@ -1,5 +1,5 @@
 name: hearthward-guard
-version: "0.9.2"
+version: "0.9.3"
 description: "Screens inbound chat, attachments, picture text and tool results for text aimed at the AI and for scams, holds suspicious messages for the owner, and filters replies (fail closed)."
 manifest_version: 2
 api_version: 1
@@ -23,6 +23,6 @@ config_schema:
   gatehouse: {type: dict, default: {}, description: "Reply filter (settings reference: common/config.py)"}
   log: {type: dict, default: {}, description: "Event log; raw_text false keeps message text out of it"}
   heartbeat: {type: dict, default: {}, description: "Heartbeat directory and interval for a supervisor"}
-  ocr: {type: dict, default: {}, description: "Picture scam shield: read picture text (Tesseract), check it, answer with a verdict; with the default unscanned_media: hold, pictures are not passed to the model (settings reference: common/config.py)"}
+  ocr: {type: dict, default: {}, description: "Picture scam shield: read picture text (Tesseract), check it, answer with a verdict; in enforce mode pictures are not passed to the model while the reader is on or threshold.unscanned_media is hold (the default) (settings reference: common/config.py)"}
   knock: {type: dict, default: {}, description: "Tool policy: never-allowed list, taint rule, tool allowlists (settings reference: knock/config.py)"}
   require_no_hook_timeout: {type: bool, default: true, description: "Refuse to run unless plugins.hook_callback_timeout is 0"}

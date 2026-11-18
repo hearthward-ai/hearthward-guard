@@ -82,7 +82,7 @@ class TestCheckerCall(Base):
         self.assertTrue(user.startswith(second_check.USER_HEAD))          # fixed part first (prompt cache)
         self.assertRegex(user, r"The check code is [a-z0-9]{6}\. Copy it into \"code\"\.$")
         self.assertIn("001| Bake for 25 minutes.", self.excerpts()[0])
-        self.assertTrue(r.prompt_id.startswith("r1-"))
+        self.assertTrue(r.prompt_id.startswith("r3-"))
         # prompt revision 1 (bench plan): one-line JSON asked in both system prompts, sent as the system message
         self.assertTrue(b["messages"][0]["content"].endswith("Write the JSON on one line."))
         for v in second_check.VARIANTS:
@@ -556,7 +556,7 @@ class TestWiring(Base):
 
     def test_status_line(self):
         g = self.guard(probes=False)
-        self.assertIn("model check on (r1-", g.cmd_guard(""))
+        self.assertIn("model check on (r3-", g.cmd_guard(""))
 
 
 # ---------------------------------------------------------------- concurrency

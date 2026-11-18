@@ -98,7 +98,7 @@ class TestEverydayPicturesAreNotScams(unittest.TestCase):
         for t in ("City Water Utility: your service will be cut off today. Pay the $84.20 reconnection balance "
                   "with Google Play gift cards and send the card numbers to 555-0134.",
                   "This is the IRS. A warrant has been issued for your arrest. Call 555-0134 now.",
-                  "Your account has been suspended. Verify your account at https://secure-login.example.invalid/x",
+                  "Your account has been suspended. Verify your account at https://secure-login.example.top/x",
                   "国网客服：您的账户已冻结，请将电费转账到安全账户，否则将被起诉。",
                   "恭喜您中奖！扫码领取 https://example.invalid/a1 奖金 5000 元",
                   "Package on hold: pay the $1.99 redelivery fee at https://example.invalid/a1",

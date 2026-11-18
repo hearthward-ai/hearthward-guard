@@ -54,6 +54,9 @@ class SecondCheck:
     pause_flag: str = ""               # a file whose presence means "checker paused" (e.g. a gaming flag)
     tool_timeout_s: float = 8.0
     score_mode: bool = False           # ask for logprobs and record a score (tuning only)
+    # one retry after a bad checker answer, only for items with no rule-layer sign (11-18). Off by default:
+    # decision review pick 8 says a bad answer is a hijack sign and is never retried
+    tamper_retry: bool = False
 
     @property
     def enabled(self) -> bool:
@@ -74,6 +77,7 @@ class Threshold:
     unscanned_media: str = "hold"       # hold (= skip) | owners | allow
     weak_action: str = "pass"           # pass | hold: weak score in direct chat
     weak_action_content: str = "hold"   # pass | hold: weak score in attachments, quoted text, tool results
+    #   (rule signs; a model-check "suspicious" alone on inbound text taints the turn instead, see README)
     fence_tool_results: bool = True
     scan_timeout_s: float = 10.0        # a scan that takes longer holds the message
 
@@ -395,6 +399,7 @@ def parse(raw: Any) -> Config:
         tool_timeout_s=_range("second_check.tool_timeout_s",
                               _get(s, "tool_timeout_s", float, ds.tool_timeout_s, "second_check"), 0.5, 600.0),
         score_mode=_get(s, "score_mode", bool, ds.score_mode, "second_check"),
+        tamper_retry=_get(s, "tamper_retry", bool, ds.tamper_retry, "second_check"),
         calls_per_sender_10min=_range("second_check.calls_per_sender_10min",
                                       _get(s, "calls_per_sender_10min", int, ds.calls_per_sender_10min,
                                            "second_check"), 1, 10_000),

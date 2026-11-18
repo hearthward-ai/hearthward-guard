@@ -425,7 +425,7 @@ def secret_kind(text: str, clock: _Clock | None = None, rv: normalize.Revealed |
 # ---------------------------------------------------------------- links (recheck item 7)
 # Destinations whose request logs an outsider cannot read: a link there is never a way out, whatever
 # its query says. Decision review 2026-11-17 (pick 7): EXACT host names from a fixed list (no "google.<any
-# country>" heuristic: google.qzx.invalid is not Google), whole first path segments ("/search", never
+# country>" heuristic: google.qzx.io is not Google), whole first path segments ("/search", never
 # "/searchbyimage"), no redirect paths (/url, /l/, click trackers), no DuckDuckGo (/l/ and !bangs are open
 # redirects). Operators can add exact hosts (gatehouse.safe_link_hosts), never whole domains.
 _GOOGLE_CC = ("com", "co.uk", "ca", "com.au", "co.nz", "ie", "de", "at", "ch", "fr", "be", "nl", "es", "pt", "it",

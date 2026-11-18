@@ -275,7 +275,7 @@ class TestCancel(MCBase):
         STUB.delay = 0.6
         g = self.guard(owner_chat="all", timeout_s=2.0)
         long = FILLER * 280                          # four chunks
-        with mock.patch.object(hooks.Guard, "_job_limit", lambda self, jobs, t: 0.8):
+        with mock.patch.object(hooks.Guard, "_job_limit", lambda self, jobs, t, retry=False: 0.8):
             r = dispatch(g, ev(long, user=OWNER, chat="owner-dm"), self.gw)
         self.assertEqual(r, hooks.SKIP_HELD)
         time.sleep(2.0)                              # the worker finishes its current call, then stops

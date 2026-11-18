@@ -113,6 +113,7 @@ def _webp_size(data: bytes) -> tuple[int, int]:
 _EXIF_TEXT_TAGS = {0x010E, 0x013B, 0x8298, 0x9286, 0x9C9B, 0x9C9C, 0x9C9D, 0x9C9E, 0x9C9F, 0x010F, 0x0110, 0x0131}
 _UCS2_TAGS = {0x9C9B, 0x9C9C, 0x9C9D, 0x9C9E, 0x9C9F}
 _XMP_TAG_RX = re.compile(r"<[^<>]{0,2000}>")          # [^<>]: a run of "<" is read once, not 2,000 times each
+_XMP_PI_RX = re.compile(r"<\?[^<>]{0,2000}\?>")       # processing instructions (xpacket framing)
 _XMP_ATTR_RX = re.compile(r"\b[\w:.-]{1,60}=\"([^\"]{1,2000})\"")
 
 
@@ -151,7 +152,11 @@ _MAX_EXIF_TEXT_PER_IFD = 20
 
 
 def _clean_meta(s: str) -> str:
-    s = "".join(ch if (ch.isprintable() or ch in "\n\t") else " " for ch in s)
+    """Control characters become spaces. Format characters (Unicode Cf: zero-width, bidi, tag characters)
+    are KEPT, so the scan sees hidden text and counts invisible characters (0.9.3 lab re-run L1: they were
+    blanked, which silently wiped tag-character payloads). A leading byte-order mark is dropped."""
+    s = s[1:] if s.startswith("\ufeff") else s
+    s = "".join(ch if (ch.isprintable() or ch in "\n\t" or unicodedata.category(ch) == "Cf") else " " for ch in s)
     return re.sub(r"[ \t]+", " ", s).strip()
 
 
@@ -213,6 +218,7 @@ def _exif_texts(tiff: bytes, budget: "_Budget | None" = None) -> list[str]:
 
 def _xmp_text(xml: bytes) -> str:
     s = xml.decode("utf-8", errors="replace")[:_MAX_ITEM_BYTES]
+    s = _XMP_PI_RX.sub(" ", s)               # <?xpacket begin=... id=...?> is packet framing, not text (L2)
     attrs = [m.group(1) for m in _XMP_ATTR_RX.finditer(s) if not m.group(1).startswith(("http://", "https://",
                                                                                          "adobe:ns", "uuid:", "xmp."))]
     body = _XMP_TAG_RX.sub(" ", s)

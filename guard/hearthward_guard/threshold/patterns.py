@@ -42,6 +42,15 @@ def _r(family: str, weight: float, src: str, flags: int = _F, raw: bool = False,
     return Rule(family, weight, re.compile(src, flags), raw, chat)
 
 
+_SYS_ZH = "(?:系统|系統)(?:消息|通知|提示|公告|讯息|訊息|指令)"
+_SYS_HDR_ZH = r"[\[【〖〔〘「『]\s*" + _SYS_ZH + r"\s*[\]】〗〕〙」』]"
+# medium only when the claim is aimed at the reading AI (round 2 R2-1): bare 已批准 / 已授权 / 助手 /
+# 机器人 appear in ordinary app and group notices ("群主已批准你的入群申请") and stay weak
+_SYS_AUTH_ZH = ("(?:授权你|授權你|你的(?:规则|規則|指令|设定|設定|限制)|"
+                "(?:之前|以前|原来|原來|所有|全部)的?(?:规则|規則|指令|设定|設定|限制)|"
+                "(?:AI|ai|人工智能)?助手(?:请|請)|致(?:AI|ai|助手)|"
+                "(?:已批准|已核准|已授权|已授權)[^\\n]{0,8}?(?:把|将|將)[^\\n]{0,30}?"
+                "(?:发给|發給|发到|發到|转发|轉發|发送|發送|分享|上传|上傳))")
 _AI = alt("an?\\s+ai", "ai", "a\\.i\\.", "artificial\\s+intelligence", "(?:ai\\s+)?assistants?", "(?:ai\\s+)?agents?",
           "llms?", "(?:large\\s+)?language\\s+models?", "chat\\s*bots?", "bots?", "gpt", "chatgpt", "models?",
           "copilot", "autonomous\\s+agents?")
@@ -173,6 +182,19 @@ RULES: list[Rule] = [
     _r("marker", STRONG, r"[\[【〖〔〘「『({<]\s*Guard\s*:|[\[【〖〔〘「『({<]\s*Untrusted\s+output\s+of\s+tool\b", chat=0.2),
     _r("marker", MEDIUM, r"\[\s*" + alt("replying\\s+to", "quoted\\s+message", "forwarded\\s+from", "system\\s+note")
        + r"\s*:"),
+    # fake system headers in pasted or fetched text (0.9.3 lab re-run M2c): "【系统消息】", "系统通知：",
+    # "System notice:". Alone they are weak (chat apps and shops print them: "系统消息：张三加入了群聊");
+    # with an authority claim or words about the assistant, its rules or approval on the same line, medium
+    _r("marker", WEAK, _SYS_HDR_ZH + r"|(?:^|\n)[ \t]*" + _SYS_ZH + r"[ \t]*[:：]|(?:^|\n)[ \t]*system[ \t]+"
+       + alt("notice", "notification", "update", "alert", "announcement") + r"[ \t]*:", raw=True),
+    _r("marker", MEDIUM, r"(?:" + _SYS_HDR_ZH + r"|" + _SYS_ZH + r"[ \t]*[:：])[^\n]{0,40}?" + _SYS_AUTH_ZH, raw=True),
+    _r("marker", MEDIUM, r"(?:^|\n)[ \t]*system[ \t]+" + alt("notice", "notification", "update", "alert", "announcement")
+       + r"[ \t]*:[^\n]{0,80}?\b" + alt(
+           "(?:ai\\s+)?assistant\\s*[,:]", "(?:ai|bot|model)\\s*[,:]",
+           "(?:the\\s+)?assistant'?s\\s+(?:rules|instructions|settings|setup)\\b",
+           "override\\b", "(?:previous|earlier|prior|your|its|all)\\s+(?:rules|instructions)\\b",
+           "(?:approved|authori[sz]ed)[^\\n]{0,30}?\\b(?:send|forward|share|upload|email)\\b"),
+       raw=True),
     # 5. secrecy towards the user
     _r("secrecy", STRONG, r"\b" + alt("do\\s+not", "don'?t", "never", "without", "avoid", "no\\s+need\\s+to") + r"\s+"
        + _TELL + r"\s+" + gap(1) + alt("the\\s+", "your\\s+", "this\\s+") + r"?" + _PERSON + r"\b"),

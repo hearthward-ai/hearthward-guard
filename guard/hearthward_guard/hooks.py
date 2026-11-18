@@ -38,7 +38,7 @@ from .threshold import budget, media, normalize, ocr, recheck, scam, scan, secon
 from .threshold.window import Window
 
 PLUGIN_NAME = "hearthward-guard"
-VERSION = "0.9.2"
+VERSION = "0.9.3"
 CONTEXT_CHARS = 20_000       # conversation text kept per session for the reply's link check
 CONTEXT_MESSAGES = 40
 CONTEXT_SESSIONS = 200
@@ -386,6 +386,7 @@ class Guard:
         unscanned = False
         pics: list[tuple[str, object]] = []
         pic_texts: list[str] = []
+        meta_texts: list[str] = []
         if extra_media:
             media_issue = "unknown attachment type"
         if len(atts) > c.threshold.max_attachments:
@@ -407,7 +408,7 @@ class Guard:
             else:
                 unscanned = True
         if pics and not media_issue:
-            media_issue = await self._read_pictures(pics, parts, att_texts, pic_texts)
+            media_issue = await self._read_pictures(pics, parts, att_texts, pic_texts, meta_texts)
         if unscanned and not media_issue:
             pol = c.threshold.unscanned_media
             if pol in ("hold", "skip") or (pol == "owners" and not is_owner):
@@ -415,7 +416,19 @@ class Guard:
 
         # ---- scan
         verdict = await self._scan_parts(parts)
-        key = (platform, chat)            # per chat, not per sender (review M1)
+        if meta_texts and verdict.level != scan.HOLD:
+            # lab 0.9.2 bug 2: text stored inside a picture file (EXIF, XMP, PNG text, JPEG comment) has no
+            # ordinary reason to address an AI, so ONE weak sign there holds (content elsewhere needs two)
+            mv = await self._scan_parts([("attachment", m) for m in meta_texts])
+            if mv.level == scan.HOLD or mv.score >= scan.WEAK_AT - 1e-9:
+                verdict.raise_to(scan.HOLD, "picture-metadata")
+                # 0.9.3 re-run M1: the content rule's "one weak sign only" note is stale once this holds
+                verdict.notes = [n for n in verdict.notes if n != "one weak sign only"]
+                verdict.notes.append("text aimed at the AI stored in the picture file")
+                for f, w in mv.families.items():
+                    verdict.families[f] = max(verdict.families.get(f, 0.0), w)
+                verdict.snippets += [s for s in mv.snippets if s not in verdict.snippets][:max(0, 5 - len(verdict.snippets))]
+        key = (platform, chat)           # per chat, not per sender (review M1)
         if verdict.level != scan.HOLD:
             joined = "\n".join([text] + [b for _n, b in att_texts])
             wv = self.window.check(key, joined)
@@ -486,6 +499,10 @@ class Guard:
                 # review OC-4: the checker was down, paused, busy or answered wrongly: say so neutrally,
                 # never "your picture tries to give instructions"
                 sender_text = messages.picture_text("held_unchecked", loc)
+            elif ((mc or {}).get("partial_only") and pre_level != scan.HOLD
+                  and "weak-held" not in verdict.reasons):
+                # lab 0.9.2 bug 1: held only because it was too long to double-check in full
+                sender_text = messages.picture_text("held_partial", loc)
             else:
                 sender_text = messages.picture_text("held_injection", loc)
             if sa is not None and sa.level in ("high", "medium"):
@@ -495,7 +512,8 @@ class Guard:
         return SKIP_HELD
 
     # ------------------------------------------------------------------ picture shield (job 6)
-    async def _read_pictures(self, pics: list, parts: list, att_texts: list, pic_texts: list) -> str:
+    async def _read_pictures(self, pics: list, parts: list, att_texts: list, pic_texts: list,
+                             meta_texts: list | None = None) -> str:
         """Text of each picture (OCR, plus metadata text) into parts / att_texts / pic_texts.
         -> "" when all were read, else the plain-language reason (the message is then held)."""
         oc = self.cfg.ocr
@@ -521,6 +539,8 @@ class Guard:
                     parts.append(("attachment", t))
                     att_texts.append((f"{label}: {name}", t))
                     pic_texts.append(t)
+                    if label == "picture metadata" and meta_texts is not None:
+                        meta_texts.append(t)
         return ""
 
     def _read_one_picture(self, path, deadline: float) -> tuple[list, str]:
@@ -628,30 +648,51 @@ class Guard:
             return scan.scan_text(chunk, "attachment", th.max_scan_chars, min(1.0, th.scan_timeout_s)).score
         return score
 
-    def _run_jobs(self, jobs: list, timeout: float, cancel: "threading.Event | None" = None) -> list:
+    def _run_jobs(self, jobs: list, timeout: float, cancel: "threading.Event | None" = None,
+                  retry_ok=None) -> list:
         """Blocking: one checker call set per job (content / chat). Raises CheckError on any failure.
-        cancel: set when the caller gave up; the next call is then not made (review MC-4)."""
+        cancel: set when the caller gave up; the next call is then not made (review MC-4).
+        retry_ok: see second_check.check_text (None = a bad answer is never retried)."""
         out = []
         for variant, txt, decoded in jobs:
             out.append(second_check.check(txt, self.cfg.second_check.endpoint, self.cfg.second_check.model, timeout,
                                           self.cfg.second_check.max_chars, checker=self.checker, variant=variant,
-                                          scorer=self._scorer(), decoded=decoded, cancel=cancel))
+                                          scorer=self._scorer(), decoded=decoded, cancel=cancel, retry_ok=retry_ok))
         return out
+
+    def _retry_gate(self, v: scan.Verdict, budget_key: str | None):
+        """second_check.tamper_retry (off by default, decision review pick 8): a callable for ONE retry
+        per message after a bad checker answer, or None. Only when the rules saw nothing at all (no family,
+        no signal, score 0) and, for a non-owner, one more call fits the budget."""
+        if not self.cfg.second_check.tamper_retry or v.level != scan.PASS or v.score > 0 or v.signals or v.families:
+            return None
+        used = []
+
+        def ok() -> bool:
+            if used:
+                return False
+            used.append(1)
+            if budget_key is None:
+                self.budget.note(1)
+                return True
+            return self.budget.charge(budget_key, 1, count_refusal=False)   # a tamper hold, not "over budget"
+        return ok
 
     def _job_calls(self, jobs: list) -> int:
         sc = self.cfg.second_check
         return sum(min(sc.max_chunks, len(second_check.token_chunks(t, sc.chunk_tokens, sc.max_chars)))
                    for _v, t, _d in jobs)
 
-    def _job_limit(self, jobs: list, timeout: float) -> float:
-        calls = self._job_calls(jobs) + (2 if self.checker.health.due() else 0)
+    def _job_limit(self, jobs: list, timeout: float, retry: bool = False) -> float:
+        calls = self._job_calls(jobs) + (2 if self.checker.health.due() else 0) + (1 if retry else 0)
         return timeout * calls + 2.0
 
-    async def _checked(self, jobs: list, timeout: float) -> list:
+    async def _checked(self, jobs: list, timeout: float, retry_ok=None) -> list:
         """The jobs in the model-check pool with a time limit; on time-out the work is cancelled."""
         cancel = threading.Event()
         try:
-            return await self._in_pool("check", self._job_limit(jobs, timeout), self._run_jobs, jobs, timeout, cancel)
+            return await self._in_pool("check", self._job_limit(jobs, timeout, retry_ok is not None), self._run_jobs,
+                                       jobs, timeout, cancel, retry_ok)
         except BaseException:
             cancel.set()
             raise
@@ -677,10 +718,19 @@ class Guard:
             verdict.notes.append("double-check unsure")
         if any(r.checker_words for r in results):
             verdict.raise_to(scan.WEAK, "checker-words")
+        partial_only = False
         if partial and not is_owner_chat and (sc.oversize == "hold" or stranger):
+            # lab 0.9.2 bug 1: remember when the length alone held it (the sender is then told
+            # "too long to check", never "tries to give instructions")
+            # 0.9.3 re-run M3: only when the checker said "none" and saw no checker words; "suspicious"
+            # is a reason of its own, so the sender is never told "too much text" then
+            partial_only = (worst.verdict == "none" and not any(r.checker_words for r in results) and (
+                verdict.level == scan.PASS or (
+                    verdict.level == scan.WEAK and not self._weak_holds(verdict, verdict.content_level != scan.PASS))))
             verdict.raise_to(scan.HOLD, "second-check-partial")
             verdict.notes.append("too long to double-check in full")
         return {"verdict": worst.verdict, "kinds": list(worst.kinds), "partial": partial,
+                "partial_only": partial_only, "retried": next((r.retried for r in results if r.retried), ""),
                 "ms": round(sum(r.ms for r in results), 1), "prompt_id": worst.prompt_id,
                 "score": max((r.score for r in results if r.score is not None), default=None)}
 
@@ -705,9 +755,10 @@ class Guard:
             verdict.notes.append("too many messages to double-check right now")
             self.events.write("model-check-budget", platform=platform, user=events.anon(user), calls=calls)
             return {"outcome": "busy"}, unchecked
+        retry_ok = self._retry_gate(verdict, None if is_owner else f"{platform}:{user}")
         try:
-            results = await self._checked(jobs, sc.timeout_s)
-        except second_check.CheckTampered:            # decision review pick 8: a hijack sign, never retried
+            results = await self._checked(jobs, sc.timeout_s, retry_ok)
+        except second_check.CheckTampered:      # decision review pick 8: a hijack sign (tamper_retry: after 1 retry)
             verdict.raise_to(scan.HOLD, "second-check-tamper")
             verdict.notes.append("double-check answer was not in the agreed shape")
             return {"outcome": "tamper"}, unchecked
@@ -1051,8 +1102,9 @@ class Guard:
                     jobs = [("content",) + _bounded(lambda: self._model_text([text]), c.threshold.scan_timeout_s)]
                     self.budget.note(self._job_calls(jobs))
                     cancel = threading.Event()
-                    results = _bounded(lambda: self._run_jobs(jobs, sc.tool_timeout_s, cancel),
-                                       self._job_limit(jobs, sc.tool_timeout_s), cancel)
+                    retry_ok = self._retry_gate(v, None)
+                    results = _bounded(lambda: self._run_jobs(jobs, sc.tool_timeout_s, cancel, retry_ok),
+                                       self._job_limit(jobs, sc.tool_timeout_s, retry_ok is not None), cancel)
                     mc = self._apply_results(v, results, False, stranger=False)
                 except second_check.CheckTampered:
                     v.raise_to(scan.HOLD, "second-check-tamper")           # decision review pick 8

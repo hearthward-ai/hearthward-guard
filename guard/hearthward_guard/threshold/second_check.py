@@ -10,7 +10,10 @@ check code. Two failure kinds (decision review 2026-11-17, pick 8; recheck rules
                     duplicate or extra key, a verdict outside none|suspicious|inject, finish_reason other
                     than "stop", a reply over 200 bytes, or HTTP 4xx. Treated as a hijacked checker: it
                     stays held and is never retried (each retry has a fresh nonce, so retrying would give
-                    a hijack several tries at one clean answer).
+                    a hijack several tries at one clean answer). Opt-in exception (second_check.tamper_retry,
+                    default off, 11-18): ONE retry per message with a fresh nonce and code, only when the caller
+                    allows it (no rule-layer sign at all, budget left) and never after a tool-call reply; a
+                    second bad answer is tamper as before.
 The prompts and canary probes are data files next to this module (attack wording stays out of plugin
 string literals) and are hashed into prompt_id. Nothing the model writes is ever shown or passed on: only
 the enum verdict, the kinds, the line number and the timing are kept.
@@ -38,8 +41,12 @@ MAX_REPLY_BYTES = 200
 MAX_LINES = 999
 OVERLAP_CHARS = 300
 DECODED_CHARS = 1000
-PROMPT_REVISION = 1               # bench plan revision 1 (11-17): "Write the JSON on one line." in both prompts;
+PROMPT_REVISION = 3               # 1 (11-17): "Write the JSON on one line." in both prompts; 2 (11-18): a person
+                                  # taking back their own earlier message is none (night bench X1/A1 false holds);
+                                  # 3 (11-18, lab re-run M2): only explicit first-person retractions with no other
+                                  # request; content rule 8 (summary steering); inject rules win
                                   # prompt_id = r<revision>-<hash of both prompts>
+TOOL_CALL_REPLY = "checker reply asked for a tool"
 MAX_OUTPUT_TOKENS = 96            # measured 11-17: the grammar output is pretty-printed, 40-61 tokens
 DECODED_HEAD = "--- decoded by the guard ---"
 SCHEMA = {
@@ -91,6 +98,10 @@ class CheckTampered(CheckError):
     """The checker answered, but not in the agreed shape: count it as a hijack, never retry."""
 
 
+class CheckToolCall(CheckTampered):
+    """The checker reply asked for a tool: tamper, and never retried even with tamper_retry on."""
+
+
 @dataclass
 class Result:
     verdict: str = "none"
@@ -104,6 +115,7 @@ class Result:
     prompt_id: str = ""
     score: float | None = None     # score mode: P(inject) + 0.5 P(suspicious), None when unavailable
     checker_words: bool = False
+    retried: str = ""              # tamper_retry: the first bad answer's reason when one retry was made
 
     @property
     def found(self) -> bool:
@@ -112,7 +124,8 @@ class Result:
     def summary(self) -> dict:
         return {"verdict": self.verdict, "kinds": list(self.kinds), "line": self.line, "chunks": self.chunks,
                 "chunks_total": self.chunks_total, "partial": self.partial, "ms": round(self.ms, 1),
-                "prompt_id": self.prompt_id, "score": self.score, "checker_words": self.checker_words}
+                "prompt_id": self.prompt_id, "score": self.score, "checker_words": self.checker_words,
+                "retried": self.retried}
 
 
 # ------------------------------------------------------------------ prompts
@@ -346,7 +359,7 @@ def parse_reply(data, code: str) -> tuple[str, tuple, int]:
     if ch.get("finish_reason") != "stop":
         raise CheckTampered("checker reply did not finish normally")
     if msg.get("tool_calls") or msg.get("function_call"):
-        raise CheckTampered("checker reply asked for a tool")
+        raise CheckToolCall(TOOL_CALL_REPLY)
     if not isinstance(content, str):
         raise CheckTampered("unexpected checker reply type")
     if len(content.encode("utf-8", "surrogatepass")) > MAX_REPLY_BYTES:
@@ -541,7 +554,8 @@ class Checker:
             raise CheckDegraded("checker degraded: " + self.health.reason)
 
     def check(self, text: str, variant: str = "content", *, timeout: float | None = None, scorer=None,
-              decoded: str = "", cancel: "threading.Event | None" = None, max_chunks: int | None = None) -> Result:
+              decoded: str = "", cancel: "threading.Event | None" = None, max_chunks: int | None = None,
+              retry_ok=None) -> Result:
         t0 = time.perf_counter()
         timeout = self.sc.timeout_s if timeout is None else timeout
         _stop_if(cancel)
@@ -549,7 +563,7 @@ class Checker:
         res = check_text(text, variant, call=lambda t: self._one(t, variant, timeout),
                          max_chunks=self.sc.max_chunks if max_chunks is None else max_chunks,
                          chunk_tokens=self.sc.chunk_tokens, max_chars=self.sc.max_chars, scorer=scorer,
-                         decoded=decoded, cancel=cancel)
+                         decoded=decoded, cancel=cancel, retry_ok=retry_ok)
         res.prompt_id = self.prompt_id
         res.ms = (time.perf_counter() - t0) * 1000
         return res
@@ -561,9 +575,12 @@ def _stop_if(cancel) -> None:
 
 
 def check_text(text: str, variant: str, *, call, max_chunks: int = 4, chunk_tokens: int = 1500,
-               max_chars: int = 6000, scorer=None, decoded: str = "", cancel=None) -> Result:
+               max_chars: int = 6000, scorer=None, decoded: str = "", cancel=None, retry_ok=None) -> Result:
     """Chunk, select and check. The strictest chunk verdict wins; any failure raises at once. cancel (a
-    threading.Event) is looked at before every call: a check whose time ran out stops (review MC-4)."""
+    threading.Event) is looked at before every call: a check whose time ran out stops (review MC-4).
+    retry_ok: None = never retry (decision review pick 8); else a callable asked once, after the first
+    bad answer of this item: True = one more call with a fresh nonce and code (a tool-call reply is
+    never retried), and a second bad answer raises CheckTampered."""
     if variant not in VARIANTS:
         raise ValueError("unknown checker variant")
     parts = token_chunks(text, chunk_tokens, max_chars)
@@ -577,7 +594,15 @@ def check_text(text: str, variant: str, *, call, max_chunks: int = 4, chunk_toke
     for n, i in enumerate(picked):
         _stop_if(cancel)
         chunk = parts[i] + (extra if n == 0 else "")
-        verdict, kinds, line, lines, score = call(chunk)
+        try:
+            verdict, kinds, line, lines, score = call(chunk)
+        except CheckTampered as e:
+            why = str(e.args[0]) if e.args else "tamper"
+            if retry_ok is None or res.retried or isinstance(e, CheckToolCall) or not retry_ok():
+                raise
+            res.retried = why
+            _stop_if(cancel)
+            verdict, kinds, line, lines, score = call(chunk)       # fresh nonce and code (one_call)
         res.chunks += 1
         if score is not None:
             scores.append(score)
@@ -592,18 +617,19 @@ def check(text: str, endpoint: str, model: str = "local", timeout: float = 8.0, 
           post=None, *, variant: str = "content", max_chunks: int = 4, chunk_tokens: int = 1500,
           json_mode: str = "schema", slot: int = -1, prompts: Prompts | None = None, score_mode: bool = False,
           scorer=None, decoded: str = "", headers: dict | None = None, checker: "Checker | None" = None,
-          cancel=None, chunk_cap: int | None = None) -> Result:
+          cancel=None, chunk_cap: int | None = None, retry_ok=None) -> Result:
     """Check one item. With `checker` (the guard): its settings, pause flag and canary probes apply.
     Without (bench and tools): a one-shot check, no probes. Raises CheckUnavailable/CheckTampered."""
     if checker is not None:
         return checker.check(text, variant, timeout=timeout, scorer=scorer, decoded=decoded, cancel=cancel,
-                             max_chunks=chunk_cap)
+                             max_chunks=chunk_cap, retry_ok=retry_ok)
     t0 = time.perf_counter()
     prompts = prompts or default_prompts()
     res = check_text(text, variant, call=lambda t: one_call(
         t, variant, endpoint=endpoint, model=model, timeout=timeout, post=post, prompts=prompts,
         json_mode=json_mode, slot=slot, headers=headers, score_mode=score_mode),
-        max_chunks=max_chunks, chunk_tokens=chunk_tokens, max_chars=max_chars, scorer=scorer, decoded=decoded)
+        max_chunks=max_chunks, chunk_tokens=chunk_tokens, max_chars=max_chars, scorer=scorer, decoded=decoded,
+        retry_ok=retry_ok)
     res.prompt_id = prompts.id
     res.ms = (time.perf_counter() - t0) * 1000
     return res
