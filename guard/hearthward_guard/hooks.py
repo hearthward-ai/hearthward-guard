@@ -660,11 +660,17 @@ class Guard:
                                           scorer=self._scorer(), decoded=decoded, cancel=cancel, retry_ok=retry_ok))
         return out
 
-    def _retry_gate(self, v: scan.Verdict, budget_key: str | None):
+    def _retry_gate(self, v: scan.Verdict, budget_key: str | None, jobs: list | tuple = ()):
         """second_check.tamper_retry (off by default, decision review pick 8): a callable for ONE retry
         per message after a bad checker answer, or None. Only when the rules saw nothing at all (no family,
-        no signal, score 0) and, for a non-owner, one more call fits the budget."""
+        no signal, score 0), no words aimed at a checker, and, for a non-owner's message, one more call fits
+        the budget (owner messages and tool results are counted, never refused)."""
         if not self.cfg.second_check.tamper_retry or v.level != scan.PASS or v.score > 0 or v.signals or v.families:
+            return None
+        # words aimed at a checker (a hijack attempt on the check itself) close the gate too (leak review
+        # suggestion 5): the retry only reaches texts in which the rules and these words find nothing
+        if any(second_check.checker_words(t if isinstance(t, str) else "") or
+               second_check.checker_words(d if isinstance(d, str) else "") for _v, t, d in jobs):
             return None
         used = []
 
@@ -755,7 +761,7 @@ class Guard:
             verdict.notes.append("too many messages to double-check right now")
             self.events.write("model-check-budget", platform=platform, user=events.anon(user), calls=calls)
             return {"outcome": "busy"}, unchecked
-        retry_ok = self._retry_gate(verdict, None if is_owner else f"{platform}:{user}")
+        retry_ok = self._retry_gate(verdict, None if is_owner else f"{platform}:{user}", jobs)
         try:
             results = await self._checked(jobs, sc.timeout_s, retry_ok)
         except second_check.CheckTampered:      # decision review pick 8: a hijack sign (tamper_retry: after 1 retry)
@@ -1102,7 +1108,7 @@ class Guard:
                     jobs = [("content",) + _bounded(lambda: self._model_text([text]), c.threshold.scan_timeout_s)]
                     self.budget.note(self._job_calls(jobs))
                     cancel = threading.Event()
-                    retry_ok = self._retry_gate(v, None)
+                    retry_ok = self._retry_gate(v, None, jobs)
                     results = _bounded(lambda: self._run_jobs(jobs, sc.tool_timeout_s, cancel, retry_ok),
                                        self._job_limit(jobs, sc.tool_timeout_s, retry_ok is not None), cancel)
                     mc = self._apply_results(v, results, False, stranger=False)

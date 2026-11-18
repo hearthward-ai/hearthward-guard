@@ -67,8 +67,8 @@ def never(r) -> bool:
 class TestPick7SafeLinks(unittest.TestCase):
     def test_the_reviewers_nine_links(self):
         cases = [
-            ("https://google.qzx.io/search?d=" + B64, True),
-            ("https://maps.google.qzx.io/x/" + B64, True),
+            ("https://google.qzx.invalid/search?d=" + B64, True),
+            ("https://maps.google.qzx.invalid/x/" + B64, True),
             ("https://www.google.com/searchbyimage?image_url=https://" + EVIL + "/" + B64, True),
             ("https://duckduckgo.com/l/?uddg=https%3A%2F%2F" + EVIL + "%2F" + B64, True),
             ("https://duckduckgo.com/?q=!somebang+" + B64, True),
@@ -97,8 +97,8 @@ class TestPick7SafeLinks(unittest.TestCase):
         self.assertTrue(_removed("https://www.youtube.com/watch?v=x&url=https://" + EVIL + "/" + B64))
 
     def test_exact_hosts(self):
-        for host in ("google.qzx.io", "www.google.abc.de", "gist.github.com", "www.github.com.qzx.io",
-                     "en.wikipedia.org." + EVIL, "a.b.wikipedia.org", "youtube.com.qzx.io", "bing.com",
+        for host in ("google.qzx.invalid", "www.google.abc.de", "gist.github.com", "www.github.com.qzx.invalid",
+                     "en.wikipedia.org." + EVIL, "a.b.wikipedia.org", "youtube.com.qzx.invalid", "bing.com",
                      "stackoverflow.com", "www.openstreetmap.org"):
             self.assertTrue(_removed(f"https://{host}/wiki/{B64}"), host)
         for url in ("https://en.wikipedia.org/wiki/" + B64, "https://zh.wikipedia.org/wiki/" + B64,

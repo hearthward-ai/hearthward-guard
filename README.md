@@ -1,4 +1,4 @@
-﻿# Hearthward guard
+# Hearthward guard
 
 Hearthward is a hobby project: a private AI assistant that runs on your own computer, for you or your
 family, for planning and everyday personal help (calendar, messages, deadlines). This repository holds its

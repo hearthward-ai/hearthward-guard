@@ -39,7 +39,7 @@ DEFAULTS = {
 MODULES = ["d01_direct", "d02_markers", "d03_encoding", "d04_hidden", "d05_lookalike",
            "d06_split", "d07_tool", "d08_ocr", "d09_scam", "d10_output",
            "d11_hn_a", "d12_hn_b", "d13_more",
-           "d14_attacks2", "d15_hn2"]
+           "d14_attacks2", "d15_hn2", "d16_rr093"]
 
 
 class Builder:
@@ -49,7 +49,8 @@ class Builder:
 
     def add(self, cat: str, lang: str, ch: str, payload=None, *, g: str | None = None,
             gp: dict | None = None, exp: dict | None = None, grp: str | None = None,
-            att: str | None = None, mim: str | None = None, note: str | None = None) -> None:
+            att: str | None = None, mim: str | None = None, note: str | None = None,
+            opt: bool = False) -> None:
         key = (cat, lang)
         self.counters[key] = self.counters.get(key, 0) + 1
         cid = f"own:{cat}-{lang}-{self.counters[key]:03d}"
@@ -72,9 +73,11 @@ class Builder:
         if ch == "output" and "gatehouse" not in e:
             e["gatehouse"] = "pass"
         e.update(exp or {})
-        c["expected"] = e
+        c["expected"] = {k: v for k, v in e.items() if v is not None}   # None = drop a default
         c["hard_negative"] = cat == "hard_negative"
         c["source"] = SRC
+        if opt:
+            c["optimistic"] = True    # written after (or quoted in) the rule or prompt it tests
         c["split"] = split_for(c.get("group") or cid)
         if note:
             c["notes"] = note

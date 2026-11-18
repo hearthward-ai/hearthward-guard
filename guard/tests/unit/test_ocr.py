@@ -171,7 +171,7 @@ class TestScamSigns(unittest.TestCase):
                   "This is Microsoft support, your computer is infected. Install AnyDesk now.",
                   "爷爷我出车祸了，先转两万五，别告诉我爸妈", "帮我买 10 张 500 元购物卡，拍卡号发我",
                   "点 击 链 接 https://example.invalid/a1 解 除 冻 结",          # OCR spacing
-                  "ＵＲＧＥＮＴ: verify your account at https://paypa1-secure.top/login"):
+                  "ＵＲＧＥＮＴ: verify your account at https://paypa1-secure.invalid/login"):
             self.assertEqual(self.lv(t), "high", t)
 
     def test_honest_notices_not_flagged(self):

@@ -236,6 +236,7 @@ class TestFakeHeaderFlow(_Base):
             self.assertIsNone(dispatch(g, self.email(t, user=OWNER, chat="owner-dm"), self.gw), t)
 
     def test_header_makes_an_item_retry_ineligible(self):
+        # an everyday notice on purpose: even its lone weak header sign closes the retry gate
         g = self.guard(tamper_retry=True)
         for t in EVERYDAY_NOTICES[:1]:
             v = scan.scan_many([("attachment", t)], 120_000)

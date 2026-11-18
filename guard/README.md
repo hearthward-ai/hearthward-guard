@@ -30,8 +30,9 @@ Settings live under `plugins.entries.hearthward-guard.settings`. The full refere
 - **A bad checker answer is held.** An answer that is not in the agreed shape (wrong check code, not one
   JSON object, cut off) counts as a hijacked checker, and the item is held without a retry.
   `second_check.tamper_retry: true` (off by default) allows ONE retry per message with a fresh code, only
-  when the rules saw no sign at all and one more call fits the budget; a reply that asks for a tool is
-  never retried, and a second bad answer is held. Turning it on gives a hijack a second try, aimed at
+  when the rules saw no sign at all, the text has no words aimed at a checker, and, for a non-owner's
+  message, one more call fits the budget (owner messages and tool results get the retry without a budget
+  check); a reply that asks for a tool is never retried, and a second bad answer is held. Turning it on gives a hijack a second try, aimed at
   exactly the texts the rules cannot see, so it is **not recommended**: leave it off.
 - **Taking back your own message is not an attack.** Since prompt revision 3 (`prompt_id` `r3-...`) the
   checker is told that an explicit first-person retraction with nothing else asked ("ignore my last
@@ -104,7 +105,7 @@ reader runs without a memory limit.
 | `timeout_s` | `20` | Time limit per picture |
 | `memory_mb` | `1024` | Engine memory limit (Linux and macOS) |
 | `max_bytes` / `max_pixels` | 10 MB / 40 M | Larger pictures are held unread |
-| `max_pictures` | `4` | Per message |
+| `max_pictures` | `4` | Per message (an SVG is scanned as text, not read by the picture reader) |
 | `read_metadata` | `true` | Check text stored in the file too |
 | `locale` | `en` | Verdicts and alerts: `en`, `zh` or `both` |
 | `alert_owner` / `alerts_per_10min` | `true` / `6` | Owner alerts for likely scams from others |
@@ -152,6 +153,11 @@ mode that holds while the reader is on or `threshold.unscanned_media` is `hold` 
 0.9.2 (2026-11-17): model-check prompt revision 1 (`prompt_id` `r1-...`: the checker is asked for
 one-line JSON, to cut its answer time), preflight `OCR:` line, fictional phone numbers in every test
 fixture.
+
+## Review reports
+
+Some test docstrings name review or lab reports (`reviews/...`). Those reports are not published; the
+tests themselves state what they check.
 
 ## Licence
 

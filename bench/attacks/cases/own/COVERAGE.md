@@ -1,21 +1,21 @@
 # Own cases: coverage
 
-3,435 synthetic cases: 1,706 attacks and 1,729 hard negatives (about 1:1 per mimicked category).
-- Languages: en 1,598 / zh 1,464 / mixed 373.
-- Test split: 1,336 cases, fixed by hash. **Every attack category has at least 54 test cases.**
+3,456 synthetic cases: 1,712 attacks and 1,744 hard negatives (about 1:1 per mimicked category).
+- Languages: en 1,606 / zh 1,476 / mixed 374.
+- Test split: 1,343 cases, fixed by hash. **Every attack category has at least 54 test cases.**
 - 1,147 cases are generator specs (encodings, invisible characters, homoglyphs, images, secrets, oversized/malformed input, benign Unicode).
 
-All cases were written **blind**: the guard's patterns and code were not opened. No case is `optimistic`.
+The 3,435 cases of passes 1 and 2 (d01-d15) were written **blind**: the guard's patterns and code were not opened, and none of them is `optimistic`. The 21 cases of d16 (2026-11-18) come from the guard 0.9.3 lab re-run, so they are **not blind**; the 15 written for, or quoted in, a 0.9.3 rule or checker prompt are marked `optimistic` and should be reported separately.
 
-**Source of truth:** `own_build/` (`build.py` plus data modules `d01`-`d15`). Do not edit the JSONL by hand. Rebuild with `python -I bench/attacks/own_build/build.py`. Ids are numbered per (category, lang) in module order, so add new cases only at the end of a module or in a new module at the end of `MODULES`.
+**Source of truth:** `own_build/` (`build.py` plus data modules `d01`-`d16`). Do not edit the JSONL by hand. Rebuild with `python -I bench/attacks/own_build/build.py`. Ids are numbered per (category, lang) in module order, so add new cases only at the end of a module or in a new module at the end of `MODULES`.
 
 ## Counts (category x language x channel)
 
 | Category | n | en | zh | mixed | text | attach | tool | image | multi | output | groups | test |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| direct_override | 170 | 37 | 87 | 46 | 140 | 24 | 3 | 3 | 0 | 0 | 149 | 59 |
+| direct_override | 174 | 39 | 88 | 47 | 140 | 28 | 3 | 3 | 0 | 0 | 153 | 60 |
 | encoding | 223 | 106 | 77 | 40 | 153 | 35 | 35 | 0 | 0 | 0 | 65 | 75 |
-| fake_markers | 175 | 73 | 70 | 32 | 127 | 25 | 23 | 0 | 0 | 0 | 152 | 64 |
+| fake_markers | 177 | 74 | 71 | 32 | 127 | 27 | 23 | 0 | 0 | 0 | 154 | 64 |
 | hidden_chars | 178 | 84 | 64 | 30 | 123 | 32 | 21 | 0 | 2 | 0 | 117 | 63 |
 | image_ocr_scam | 124 | 52 | 56 | 16 | 0 | 0 | 0 | 124 | 0 | 0 | 41 | 60 |
 | lookalike | 169 | 77 | 56 | 36 | 167 | 1 | 1 | 0 | 0 | 0 | 108 | 64 |
@@ -23,9 +23,9 @@ All cases were written **blind**: the guard's patterns and code were not opened.
 | scam_text | 135 | 54 | 64 | 17 | 116 | 5 | 4 | 0 | 10 | 0 | 64 | 54 |
 | split_instruction | 184 | 85 | 84 | 15 | 8 | 4 | 0 | 3 | 169 | 0 | 92 | 74 |
 | tool_smuggling | 167 | 77 | 72 | 18 | 3 | 31 | 130 | 3 | 0 | 0 | 89 | 65 |
-| hn: direct_override | 174 | 86 | 85 | 3 | 172 | 2 | 0 | 0 | 0 | 0 | 173 | 69 |
+| hn: direct_override | 178 | 88 | 87 | 3 | 172 | 6 | 0 | 0 | 0 | 0 | 177 | 70 |
 | hn: encoding | 222 | 123 | 96 | 3 | 222 | 0 | 0 | 0 | 0 | 0 | 158 | 79 |
-| hn: fake_markers | 170 | 75 | 69 | 26 | 138 | 30 | 2 | 0 | 0 | 0 | 169 | 64 |
+| hn: fake_markers | 181 | 78 | 77 | 26 | 138 | 41 | 2 | 0 | 0 | 0 | 180 | 69 |
 | hn: hidden_chars | 178 | 97 | 68 | 13 | 178 | 0 | 0 | 0 | 0 | 0 | 178 | 64 |
 | hn: image_ocr_scam | 122 | 61 | 60 | 1 | 0 | 0 | 0 | 122 | 0 | 0 | 122 | 63 |
 | hn: lookalike | 192 | 100 | 60 | 32 | 192 | 0 | 0 | 0 | 0 | 0 | 192 | 84 |
@@ -105,3 +105,4 @@ The direct_override en count is low on purpose: public sets cover plain English 
 ## Progress notes
 - 2026-11-16 pass 1: d01-d13, 1,137 cases.
 - 2026-11-16 pass 2: d14 (attacks to at least 50 test per category, mixed fake_markers and lookalike) and d15 (hard negatives to about 1:1). Validator: 0 problems. Leakcheck: 0 hits on `cases/` and `own_build/`.
+- 2026-11-18 d16 (guard 0.9.3 lab re-run): 21 cases (6 attacks: retract-then-redirect and fake system headers; 15 hard negatives: first-person retractions and everyday system notices), not blind, 15 optimistic. They were first appended to the JSONL by hand and then moved into d16; a rebuild reproduces every file.
