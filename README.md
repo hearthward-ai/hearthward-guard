@@ -16,6 +16,13 @@ licence). It has three parts:
 
 Pictures can also be read (Tesseract OCR) and checked for common scam signs, in English and Chinese.
 
+## Install and settings
+
+- **[Install guide](guard/INSTALL.md)** ([简体中文](guard/INSTALL.zh-CN.md)): step by step, from an empty
+  computer (Linux, or Windows with WSL) to a running, checked guard. No programming knowledge needed.
+- **[Settings reference](guard/SETTINGS.md)** ([简体中文](guard/SETTINGS.zh-CN.md)): every setting, with
+  its default, what it does, when to change it and a recommendation.
+
 ## What is here
 
 | Folder | Contents |

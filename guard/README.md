@@ -8,7 +8,9 @@ A Hermes Agent plugin that checks what reaches the model and what leaves it, and
 - **Gatehouse** filters replies (secrets, hidden characters, data-carrying links).
 - **Knock** decides which tool calls may run.
 
-Settings live under `plugins.entries.hearthward-guard.settings`. The full reference is in
+Settings live under `plugins.entries.hearthward-guard.settings`. To install, follow the
+[install guide](INSTALL.md) ([简体中文](INSTALL.zh-CN.md)). Every setting is explained in the
+[settings reference](SETTINGS.md) ([简体中文](SETTINGS.zh-CN.md)); the code that reads them is
 `hearthward_guard/common/config.py` (and `knock/config.py`). Run `tools/preflight.py` before the first start.
 
 ## Model check: limits
