@@ -50,9 +50,51 @@
   - WSL（Windows Subsystem for Linux，Windows 的 Linux 子系统）是 Windows 自带的免费功能，可以在 Windows 里运行 Linux。需要 Windows 10 2004 版或更新，或 Windows 11。[第 3.0 步](#step-3-0)会安装它。
   - 没测试过的：macOS、其他 Linux 版本，以及直接在 Windows 上运行的 Hermes。可能能用，但我们没试过。
 - **网络连接**，以及大约 4 GB 的空闲磁盘空间。光 Hermes 就要占大约 2.5 GB。可选的模型复查还需要大约 21 GB。
-- **给助手用的聊天软件账号**，比如 Discord 或 Telegram。Hermes 会在它自己的设置里连上它（[第 3.8 步](#step-3-8)）。守卫是用模拟的 Discord 替身测试的，真实聊天软件还没测试过。
+- **给助手用的聊天软件账号**，比如 Discord 或 Telegram。Hermes 会在它自己的设置里连上它（[第 3.8 步](#step-3-8)）。[第 2.1 节](#step-2-1)列出了 Hermes 支持的软件。守卫只用模拟的 Discord 替身测试过。
 - **给 Hermes 本身用的 AI 模型。** Hermes 的设置会问你用哪个（云服务，或你电脑上的模型）。
 - **一到两个小时。** 大部分时间是在等下载。
+
+<a id="step-2-1"></a>
+
+### 2.1 聊天软件
+
+Hermes Agent 0.23.1 能连接下面这些聊天软件。设置方法请看 Hermes 为每个软件写的页面（链接指向 Hermes 当前的文档，我们在 2026-11-18 逐个打开核对过）。这份指南不重复那些步骤。
+
+**和守卫一起测试过的：只有 Discord，而且只是通过替身**（真实的 Hermes 代码，加上模拟的 Discord 连接）。其他软件都还没测试；下一个守卫版本计划把它们全部测一遍。
+
+| 聊天软件 | Hermes 的设置页面 | 守卫用的平台名 |
+|---|---|---|
+| Discord | [discord](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord) | `discord` |
+| Telegram | [telegram](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram) | `telegram` |
+| WhatsApp | [whatsapp](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/whatsapp) | `whatsapp` |
+| WhatsApp Business（Cloud API） | [whatsapp-cloud](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/whatsapp-cloud) | `whatsapp_cloud` |
+| Slack | [slack](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack) | `slack` |
+| Signal | [signal](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/signal) | `signal` |
+| Matrix | [matrix](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/matrix) | `matrix` |
+| Mattermost | [mattermost](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/mattermost) | `mattermost` |
+| 电子邮件（Email） | [email](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/email) | `email` |
+| 短信（SMS，Twilio） | [sms](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/sms) | `sms` |
+| BlueBubbles（iMessage） | [bluebubbles](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/bluebubbles) | `bluebubbles` |
+| QQ 机器人（QQ Bot） | [qqbot](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/qqbot) | `qqbot` |
+| 钉钉（DingTalk） | [dingtalk](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/dingtalk) | `dingtalk` |
+| 飞书 / Lark | [feishu](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/feishu) | `feishu` |
+| 企业微信（WeCom） | [wecom](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom) | `wecom` |
+| 企业微信回调（WeCom Callback，自建应用） | [wecom-callback](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom-callback) | `wecom_callback` |
+| 微信（Weixin） | [weixin](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin) | `weixin` |
+| Microsoft Teams | [teams](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams) | 以 `/whoami` 显示的为准 |
+| Google Chat | [google_chat](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/google_chat) | 以 `/whoami` 显示的为准 |
+| LINE | [line](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line) | 以 `/whoami` 显示的为准 |
+| IRC | [irc](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/irc) | 以 `/whoami` 显示的为准 |
+| SimpleX Chat | [simplex](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/simplex) | 以 `/whoami` 显示的为准 |
+| Photon iMessage | [photon](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/photon) | 以 `/whoami` 显示的为准 |
+| Buzz | [buzz](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/buzz) | 以 `/whoami` 显示的为准 |
+| 元宝（Yuanbao） | [yuanbao](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/yuanbao) | 以 `/whoami` 显示的为准 |
+
+对所有聊天软件都适用的守卫说明：
+
+- **主人：** 一律写成 `<平台名>:<用户 ID>`，用户 ID 照 `/whoami` 显示的原样写（[第 4.5 步](#step-4-5)）。含有 `@`、`.`、`+` 或 `:` 的 ID（例如 Matrix、电子邮件或短信）照原样写就行。
+- **不给工具：** 第 3.7 步收回了新装 Hermes 列出的那六个软件的工具。其他软件请在第一次启动前运行 `hermes config set platform_toolsets.<平台名> '["no_mcp"]'`。
+- **预检会检查设置里的每一个聊天软件**，而不只是你在用的那个：只要有一个还带着工具，即使你从没设置过它，预检也会失败。
 
 <a id="section-3"></a>
 
@@ -150,7 +192,7 @@ sha256sum ~/install-hermes.sh
 bash ~/install-hermes.sh --commit 3b421578588243f920886e6fe79a6faa87ea026e --skip-setup --skip-browser --skip-computer-use
 ```
 
-应该看到：`✓ prerequisites ok (git, curl)`（前置条件满足），然后是 `Cloning into ...`（正在克隆）。**这一步可能会停很久，看不到任何进度**（我们测试时大约 30 分钟，它在从 GitHub 下载 Hermes）。不要关窗口。之后是很多以 `✓` 开头的行，最后是 `✓ Hermes Agent install complete. Run: hermes`（安装完成）和 `→ Reload your shell to use hermes: open a new terminal, or run: source ~/.bashrc`（重新加载命令行后才能用 hermes）。
+应该看到：`✓ prerequisites ok (git, curl)`（前置条件满足），然后是 `Cloning ... (main)` 和 `Cloning into ...`（正在克隆；它先下载主线，再切换到固定的版本，后面会有一行 `Checking out 3b421578...`）。**这一步可能会停很久，看不到任何进度**（我们测试时大约 30 分钟，它在从 GitHub 下载 Hermes）。不要关窗口。之后是很多以 `✓` 开头的行，最后是 `✓ Hermes Agent install complete. Run: hermes`（安装完成）和 `→ Reload your shell to use hermes: open a new terminal, or run: source ~/.bashrc`（重新加载命令行后才能用 hermes）。
 现在**先不要**运行 `hermes`。
 如果没有：看[常见问题](#section-10)。
 
@@ -265,7 +307,7 @@ grep '^version' ~/hearthward-guard/guard/hearthward_guard/plugin.yaml
 
 ### 3.10 把守卫装进 Hermes
 
-这条命令按你刚下载的那个确切版本安装守卫（`--ref` 把版本固定住），暂时不启用：
+这条命令按你刚下载的那个确切版本安装守卫（`--ref` 把版本固定住），暂时不启用。Hermes 会为此从 GitHub 再下载一份自己的副本；你在第 3.9 步下载的那份用于预检，也用来确认确切的版本。
 
 ```bash
 hermes plugins install hearthward-ai/hearthward-guard/guard/hearthward_guard --ref "$(git -C ~/hearthward-guard rev-parse HEAD)" --no-enable
@@ -630,7 +672,7 @@ hermes config set plugins.entries.hearthward-guard.settings.second_check.json_mo
 然后在聊天软件里发 `/guard`。
 应该看到：回复里有 `model check on (r3-..., probes unknown)`（模型复查已开启，测试题结果未知）。“probes unknown”表示还没做过复查。你自己普通的消息只有在规则发现轻微迹象时才会被复查；想看到一次复查，可以回复（引用）聊天里任意一条之前的消息，比如写 `What does this say?`，然后再发一次 `/guard`。
 应该看到：`model check on (r3-..., probes ok)`（测试题通过）和 `model check calls in 10 min: 1`（10 分钟内复查 1 次）。
-如果看到的是 `probes degraded`：模型答错了守卫的测试题，消息会被暂扣。请使用建议的模型。
+如果看到的是 `probes degraded`：模型答错了守卫的测试题，消息会被暂扣。请换用建议的模型，然后重启 Hermes（在 Hermes 重启之前会一直显示 `probes degraded`）。
 
 <a id="section-7"></a>
 
@@ -691,7 +733,15 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 
 ### 8.1 更新守卫
 
-1. 取得守卫的版本列表：
+1. 查看你现在的版本：
+
+   ```bash
+   git -C ~/hearthward-guard describe --tags
+   ```
+
+   应该看到：你的版本，例如 `v0.9.3`。
+
+   取得守卫的版本列表：
 
    ```bash
    git -C ~/hearthward-guard fetch --tags && git -C ~/hearthward-guard tag --list 'v*'
@@ -801,8 +851,8 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 | 你看到的 | 意思 | 怎么办 |
 |---|---|---|
 | `The safety guard is not running correctly, so I can't take messages right now. ...`（安全守卫运行不正常，现在不能收消息） | 守卫发现了问题，于是拒收一切（这是有意的）。 | 运行预检（第 5.1 步），把每一行 `FAIL` 都改好。 |
-| `I held your message (could not double-check). ...`（我暂扣了你的消息，无法复查） | 模型复查开着，但模型服务没有及时回应。 | 检查服务（[第 6.4 步](#step-6-4)），再发一次消息。如果服务在运行但很慢，就多给它一些时间：`hermes config set plugins.entries.hearthward-guard.settings.second_check.timeout_s 30`（`tool_timeout_s` 也照样设）。或者关掉模型复查：`hermes config unset plugins.entries.hearthward-guard.settings.second_check.endpoint`。 |
-| `/guard` 显示 `probes degraded` | 模型答错了守卫的测试题，它的复查不被信任，消息会被暂扣。 | 使用建议的模型（[第 6.2 步](#step-6-2)）。 |
+| `I held your message (could not double-check). ...`（我暂扣了你的消息，无法复查） | 模型复查开着，而模型服务没有及时回应，或者 `/guard` 显示 `probes degraded`（见下一行）。 | 检查服务（[第 6.4 步](#step-6-4)），再发一次消息。如果服务在运行但很慢，就多给它一些时间：`hermes config set plugins.entries.hearthward-guard.settings.second_check.timeout_s 30`（`tool_timeout_s` 也照样设）。或者关掉模型复查：`hermes config unset plugins.entries.hearthward-guard.settings.second_check.endpoint`。 |
+| `/guard` 显示 `probes degraded`（常和 `could not double-check` 一起出现） | 模型太弱或太小，答不对守卫的测试题，所以它的复查不被信任，消息会被暂扣。服务本身是正常的：`/health` 仍然显示 `ok`。 | 换用建议的模型（[第 6.2 步](#step-6-2)），用它重启模型服务，然后重启 Hermes（[第 4.7 步](#step-4-7)）。换模型后，在 Hermes 重启之前会一直显示 `probes degraded`。 |
 | `The guard restarted. 1 held message(s) were still waiting for your answer; they were dropped ...`（守卫重启了，有 1 条暂扣的消息被丢弃） | Hermes 重启时还有消息在暂扣中。 | 不用管。如果那条消息重要，请发送者再发一次。 |
 | `/guard` 回复 `Only the owner can do that.` | 你的账号不是主人。 | 用第 4.5 步查到的值重做[第 4.1 步](#step-4-1)。 |
 | 测试消息（第 5.4 步）得到了正常回答 | 守卫没在 Hermes 里起作用。 | 运行 `bash ~/hearthward-preflight.sh --heartbeat`，然后做第 4.3 步和第 4.7 步。 |

@@ -113,18 +113,18 @@ Some of Hermes's environment variables override its settings file, so the guard 
 | `HERMES_MEDIA_DELIVERY_STRICT` | If it is set to anything other than on (`1`, `true`, `yes`, `on`), it overrides `gateway.strict` and preflight fails. | Do not set it. |
 | `HERMES_MEDIA_TRUST_RECENT_FILES` | If it is set to anything other than off (`0`, `false`, `no`, `off`), it overrides `gateway.trust_recent_files` and preflight fails. | Do not set it. |
 | `HERMES_MEDIA_ALLOW_DIRS` | If it is set to anything but an empty value, preflight fails (it widens the folders files can be sent from). | Do not set it. |
-
-**Limit:** the preflight check only sees the variables of the terminal it runs in. Hermes also reads
-variables from its own file `~/.hermes/.env` (and a background service can set its own), and the
-running guard does not check the three `HERMES_MEDIA_*` variables. So a `HERMES_MEDIA_*` line in
-`~/.hermes/.env` weakens file sending while preflight still prints `OK`. Check that file yourself:
-`grep -c '^HERMES_MEDIA_' ~/.hermes/.env` should print `0` (the install guide does this in step 5.1).
 | `HERMES_YOLO_MODE` | If it is on, Hermes approves every tool call by itself, so Knock turns every "ask" into "deny". | Do not set it. |
 | `HERMES_HOME` | The guard keeps its files in `$HERMES_HOME/hearthward-guard` (normally `~/.hermes/hearthward-guard`). | Leave it as Hermes sets it. |
 | `HEARTHWARD_GUARD_HEARTBEAT` | `1` forces the heartbeat file on, `0` forces it off. Unset: on only in the gateway process. | Leave it unset. |
 | `<PLATFORM>_ALLOW_ADMIN_FROM`, `<PLATFORM>_GROUP_ALLOW_ADMIN_FROM`, `<PLATFORM>_ADMIN_USERS`, `<PLATFORM>_ADMINS`, `<PLATFORM>_ADMIN_IDS`, `<PLATFORM>_ADMIN_USER_IDS` (for example `DISCORD_ADMINS`) | Read as admin lists, like the admin settings above: every admin must be an owner, or "ask" becomes "deny". | Only owners in them, or leave them unset. |
 | The variable named in `second_check.api_key_env` | Its value is sent as the key to your model server. | Only if your model server needs a key. |
 | `PATH` and `TESSDATA_PREFIX` | Used to find the picture reader (Tesseract) and its language data. Only folders written as full paths count. | Leave them as they are. |
+
+**Limit:** the preflight check only sees the variables of the terminal it runs in. Hermes also reads
+variables from its own file `~/.hermes/.env` (and a background service can set its own), and the
+running guard does not check the three `HERMES_MEDIA_*` variables. So a `HERMES_MEDIA_*` line in
+`~/.hermes/.env` weakens file sending while preflight still prints `OK`. Check that file yourself:
+`grep -c '^HERMES_MEDIA_' ~/.hermes/.env` should print `0` (the install guide does this in step 5.1).
 
 ## Guard settings: top level
 

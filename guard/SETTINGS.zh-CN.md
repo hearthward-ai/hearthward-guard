@@ -95,14 +95,14 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 | `HERMES_MEDIA_DELIVERY_STRICT` | 只要设成“开”（`1`、`true`、`yes`、`on`）以外的值，就会覆盖 `gateway.strict`，预检失败。 | 不要设置。 |
 | `HERMES_MEDIA_TRUST_RECENT_FILES` | 只要设成“关”（`0`、`false`、`no`、`off`）以外的值，就会覆盖 `gateway.trust_recent_files`，预检失败。 | 不要设置。 |
 | `HERMES_MEDIA_ALLOW_DIRS` | 只要设成非空的值，预检就失败（它会扩大可以发送文件的文件夹范围）。 | 不要设置。 |
-
-**局限：** 预检只能看到它所在终端里的变量。Hermes 还会从自己的 `~/.hermes/.env` 文件读取变量（后台服务也可能有自己的变量），而运行中的守卫不检查这三个 `HERMES_MEDIA_*` 变量。所以，`~/.hermes/.env` 里的一行 `HERMES_MEDIA_*` 会放宽文件发送，预检却照样打印 `OK`。请自己检查这个文件：`grep -c '^HERMES_MEDIA_' ~/.hermes/.env` 应该输出 `0`（安装指南第 5.1 步就做了这个检查）。
 | `HERMES_YOLO_MODE` | 开启时 Hermes 会自动批准所有工具调用，所以 Knock 会把所有“询问”变成“拒绝”。 | 不要设置。 |
 | `HERMES_HOME` | 守卫把自己的文件放在 `$HERMES_HOME/hearthward-guard`（通常是 `~/.hermes/hearthward-guard`）。 | 保持 Hermes 的设置。 |
 | `HEARTHWARD_GUARD_HEARTBEAT` | `1` 强制开启心跳文件，`0` 强制关闭。不设置时只在网关进程里开启。 | 不要设置。 |
 | `<平台>_ALLOW_ADMIN_FROM`、`<平台>_GROUP_ALLOW_ADMIN_FROM`、`<平台>_ADMIN_USERS`、`<平台>_ADMINS`、`<平台>_ADMIN_IDS`、`<平台>_ADMIN_USER_IDS`（例如 `DISCORD_ADMINS`） | 和上面的管理员设置一样当作管理员名单：每个管理员都必须是主人，否则“询问”会变成“拒绝”。 | 只写主人，或者不设置。 |
 | `second_check.api_key_env` 里写的那个变量 | 它的值会作为密钥发给你的模型服务。 | 只有模型服务需要密钥时才用。 |
 | `PATH` 和 `TESSDATA_PREFIX` | 用来找到图片识别程序（Tesseract）和它的语言数据。只认写成完整路径的文件夹。 | 保持原样。 |
+
+**局限：** 预检只能看到它所在终端里的变量。Hermes 还会从自己的 `~/.hermes/.env` 文件读取变量（后台服务也可能有自己的变量），而运行中的守卫不检查这三个 `HERMES_MEDIA_*` 变量。所以，`~/.hermes/.env` 里的一行 `HERMES_MEDIA_*` 会放宽文件发送，预检却照样打印 `OK`。请自己检查这个文件：`grep -c '^HERMES_MEDIA_' ~/.hermes/.env` 应该输出 `0`（安装指南第 5.1 步就做了这个检查）。
 
 ## 守卫设置：顶层
 

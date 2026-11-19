@@ -65,11 +65,59 @@ data-carrying links from replies, and decides which tool actions may run.
 - **An internet connection** and about 4 GB of free disk space. Hermes alone takes about 2.5 GB.
   The optional model check needs about 21 GB more.
 - **A chat app account for your assistant**, for example Discord or Telegram. Hermes connects to it
-  in its own setup ([step 3.8](#38-set-up-hermes-model-and-chat-app)). The guard was tested with a
-  stand-in for Discord; real chat apps are not tested yet.
+  in its own setup ([step 3.8](#38-set-up-hermes-model-and-chat-app)). [Section 2.1](#21-chat-apps)
+  lists the apps Hermes supports. The guard was tested with a stand-in for Discord only.
 - **An AI model for Hermes itself.** Hermes's setup asks for one (a cloud service, or a model on your
   computer).
 - **One to two hours.** Most of it is waiting for downloads.
+
+### 2.1 Chat apps
+
+Hermes Agent 0.23.1 connects to the chat apps below. To set one up, follow Hermes's own page for it
+(the links go to Hermes's current documentation; we checked each one on 2026-11-18). This guide
+does not repeat those steps.
+
+**Tested with the guard: only Discord, and only through a stand-in** (the real Hermes code with a
+fake Discord connection). The others are untested; the next guard release is planned to test them
+all.
+
+| Chat app | Hermes's setup page | Platform name for the guard |
+|---|---|---|
+| Discord | [discord](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord) | `discord` |
+| Telegram | [telegram](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram) | `telegram` |
+| WhatsApp | [whatsapp](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/whatsapp) | `whatsapp` |
+| WhatsApp Business (Cloud API) | [whatsapp-cloud](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/whatsapp-cloud) | `whatsapp_cloud` |
+| Slack | [slack](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack) | `slack` |
+| Signal | [signal](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/signal) | `signal` |
+| Matrix | [matrix](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/matrix) | `matrix` |
+| Mattermost | [mattermost](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/mattermost) | `mattermost` |
+| Email | [email](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/email) | `email` |
+| SMS (Twilio) | [sms](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/sms) | `sms` |
+| BlueBubbles (iMessage) | [bluebubbles](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/bluebubbles) | `bluebubbles` |
+| QQ Bot | [qqbot](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/qqbot) | `qqbot` |
+| DingTalk | [dingtalk](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/dingtalk) | `dingtalk` |
+| Feishu / Lark | [feishu](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/feishu) | `feishu` |
+| WeCom (Enterprise WeChat) | [wecom](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom) | `wecom` |
+| WeCom Callback (Self-Built App) | [wecom-callback](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom-callback) | `wecom_callback` |
+| Weixin (WeChat) | [weixin](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin) | `weixin` |
+| Microsoft Teams | [teams](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams) | shown by `/whoami` |
+| Google Chat | [google_chat](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/google_chat) | shown by `/whoami` |
+| LINE | [line](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line) | shown by `/whoami` |
+| IRC | [irc](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/irc) | shown by `/whoami` |
+| SimpleX Chat | [simplex](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/simplex) | shown by `/whoami` |
+| Photon iMessage | [photon](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/photon) | shown by `/whoami` |
+| Buzz | [buzz](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/buzz) | shown by `/whoami` |
+| Yuanbao | [yuanbao](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/yuanbao) | shown by `/whoami` |
+
+Guard notes that apply to every chat app:
+
+- **Owner:** always `<platform name>:<user ID>`, with the user ID exactly as `/whoami` shows it
+  ([step 4.5](#45-check-your-user-id-and-platform-name)). IDs that contain `@`, `.`, `+` or `:` (for
+  example on Matrix, Email or SMS) are fine as they are.
+- **Tools off:** step 3.7 takes the tools away from the six apps a new install lists. For any other
+  app, run `hermes config set platform_toolsets.<platform name> '["no_mcp"]'` before the first start.
+- **Preflight checks every chat app in the settings**, not only the one you use: an app that still
+  has tools makes it fail, even if you never set it up.
 
 ## 3. Install
 
@@ -168,7 +216,8 @@ bash ~/install-hermes.sh --commit 3b421578588243f920886e6fe79a6faa87ea026e --ski
 ```
 
 You should see: `✓ prerequisites ok (git, curl)`, then
-`Cloning into ...`. **This step can sit there for a long time with no progress shown** (about 30
+`Cloning ... (main)` and `Cloning into ...` (it downloads the main line first and then switches to
+the pinned version: a later line says `Checking out 3b421578...`). **This step can sit there for a long time with no progress shown** (about 30
 minutes in our test, while it downloads Hermes from GitHub). Do not close the window. Then many
 lines with `✓`, and at the end `✓ Hermes Agent install complete. Run: hermes` and
 `→ Reload your shell to use hermes: open a new terminal, or run: source ~/.bashrc`.
@@ -300,7 +349,8 @@ If not: delete the folder with `rm -rf ~/hearthward-guard` and repeat this step.
 ### 3.10 Install the guard into Hermes
 
 This installs the guard from the exact version you just downloaded (`--ref` pins it), without
-switching it on yet:
+switching it on yet. Hermes downloads its own copy from GitHub for this; your copy from step 3.9 is
+for the preflight check and for knowing the exact version.
 
 ```bash
 hermes plugins install hearthward-ai/hearthward-guard/guard/hearthward_guard --ref "$(git -C ~/hearthward-guard rev-parse HEAD)" --no-enable
@@ -690,7 +740,8 @@ see a check, reply to (quote) any earlier message in the chat, for example with
 `What does this say?`, and send `/guard` again.
 You should see: `model check on (r3-..., probes ok)` and `model check calls in 10 min: 1`.
 If you see `probes degraded` instead: the model gave wrong answers to the guard's test questions,
-and messages are held. Use the recommended model.
+and messages are held. Use the recommended model, then restart Hermes (`probes degraded` stays until
+Hermes restarts).
 
 ## 7. Optional: pictures (Tesseract)
 
@@ -750,13 +801,21 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 
 ### 8.1 Updating the guard
 
-1. Get the list of guard versions:
+1. See which version you have now:
+
+   ```bash
+   git -C ~/hearthward-guard describe --tags
+   ```
+
+   You should see: your version, for example `v0.9.3`.
+
+   Get the list of guard versions:
 
    ```bash
    git -C ~/hearthward-guard fetch --tags && git -C ~/hearthward-guard tag --list 'v*'
    ```
 
-   You should see: a list such as `v0.9.3`. If the newest one is the version you have, stop here.
+   You should see: a list such as `v0.9.3`. If the newest one is the version you have now, stop here.
 
 2. Switch to the newest version. Replace `v0.9.4` with the newest name from the list:
 
@@ -865,8 +924,8 @@ Find the message you see, then do what it says. After any fix: restart Hermes
 | You see | What it means | What to do |
 |---|---|---|
 | `The safety guard is not running correctly, so I can't take messages right now. ...` | The guard found a problem and refuses everything (on purpose). | Run the preflight check (step 5.1) and fix each `FAIL` line. |
-| `I held your message (could not double-check). ...` | The model check is on, but the model server did not answer in time. | Check the server ([step 6.4](#64-check-the-model-server-answers)), then send your message again. If the server runs but is slow, give it more time: `hermes config set plugins.entries.hearthward-guard.settings.second_check.timeout_s 30` (and the same for `tool_timeout_s`). Or turn the model check off: `hermes config unset plugins.entries.hearthward-guard.settings.second_check.endpoint`. |
-| `/guard` shows `probes degraded` | The model answers the guard's test questions wrongly, so its checks are not trusted and messages are held. | Use the recommended model ([step 6.2](#62-download-the-model)). |
+| `I held your message (could not double-check). ...` | The model check is on, and either the model server did not answer in time, or `/guard` shows `probes degraded` (see the next row). | Check the server ([step 6.4](#64-check-the-model-server-answers)), then send your message again. If the server runs but is slow, give it more time: `hermes config set plugins.entries.hearthward-guard.settings.second_check.timeout_s 30` (and the same for `tool_timeout_s`). Or turn the model check off: `hermes config unset plugins.entries.hearthward-guard.settings.second_check.endpoint`. |
+| `/guard` shows `probes degraded` (often together with `could not double-check`) | The model is too weak or too small to pass the guard's test questions, so its checks are not trusted and messages are held. The server itself is healthy: `/health` still says `ok`. | Use the recommended model ([step 6.2](#62-download-the-model)), restart the model server with it, then restart Hermes ([step 4.7](#47-restart-hermes)). `probes degraded` stays until Hermes restarts after the model change. |
 | `The guard restarted. 1 held message(s) were still waiting for your answer; they were dropped ...` | Hermes restarted while a message was held. | Nothing. Ask the sender to send it again if it mattered. |
 | `/guard` answers `Only the owner can do that.` | Your account is not the owner. | Repeat [step 4.1](#41-set-the-owner) with the values from step 4.5. |
 | Your test message (step 5.4) gets a normal answer | The guard is not active in Hermes. | Run `bash ~/hearthward-preflight.sh --heartbeat`, then do steps 4.3 and 4.7. |
