@@ -13,11 +13,11 @@ from __future__ import annotations
 import base64
 import random
 import string
-import time
 import unittest
 
 from tests.review._review import ATTACK, IGN
 from tests.unit import fakes
+from tests.unit.lineartime import Linear
 from hearthward_guard.common import config
 from hearthward_guard.gatehouse import output
 from hearthward_guard.threshold import scan
@@ -93,38 +93,30 @@ class TestEverydayMessages(unittest.TestCase):
 
 # ---------------------------------------------------------------- timing budget (R2)
 class TestGatehouseTimeBudget(unittest.TestCase):
-    """Every Gatehouse pattern runs in linear time: 200,000 characters of each shape in under 0.5 s."""
+    """Every Gatehouse pattern runs in linear time on 200,000-character replies of each shape.
+
+    Guards against: a reply pattern that backtracks or rescans (R2: 600 tabs after a trigger word
+    took 1.2 s and grew cubically; 30,000 spaces took 5.7 s and grew quadratically). The limit is
+    machine-relative (tests/unit/lineartime.py; a fixed 0.5 s went red on CI runners, 2026-11-18):
+    each shape at most MAX_RATIO x filtering ordinary prose of the same length, and 100,000 ->
+    200,000 characters at most triples the time."""
 
     N = 200_000
-    BUDGET_S = 0.5
+    MAX_RATIO = 4.0     # worst measured 2026-11-18: about 2x ('ab-cd-', 'sk-', 'a_', random words)
     UNITS = [" ", "\t", "\n", "secret" + "\t" * 50, "seed\t", "a ", "a\t", "![x](//a ", "<img ", "<tool_call>",
              "http://a/", "MEDIA: x/", "password: ", "| password | x\n", "-", "=", "`", "```", "&#", "%4",
              "\\u00", "token = ", "a_", "/a", "[r]: //", "![", "\x1b[", "\x1b]0;", "ghp_", "sk-", "Ab1", "<!--",
              " \n\t", "\u200b", "你", "ab-cd-", "secret: legal winner ", "1 "]
 
-    def _time(self, text):
-        best = None
-        for _ in range(2):              # a second try only when over: the budget is about growth, not a busy machine
-            t = time.perf_counter()
-            output.filter_reply(text, CFG, deadline=None)
-            dt = time.perf_counter() - t
-            best = dt if best is None else min(best, dt)
-            if best < self.BUDGET_S:
-                break
-        return best
-
     def test_200k_of_each_shape(self):
-        slow = []
+        lin = Linear(lambda text: output.filter_reply(text, CFG, deadline=None))
+        slow = lin.baseline_problems(self.N)
         for u in self.UNITS:
-            dt = self._time((u * (self.N // len(u) + 1))[:self.N])
-            if dt >= self.BUDGET_S:
-                slow.append((repr(u), round(dt, 2)))
+            slow += lin.problems((u * (self.N // len(u) + 1))[:self.N], repr(u), self.MAX_RATIO)
         rnd = random.Random(5)
         for name, text in (("random base64", base64.b64encode(rnd.randbytes(self.N)).decode()[:self.N]),
                            ("random words", "".join(rnd.choice("ab \n") for _ in range(self.N)))):
-            dt = self._time(text)
-            if dt >= self.BUDGET_S:
-                slow.append((name, round(dt, 2)))
+            slow += lin.problems(text, name, self.MAX_RATIO)
         self.assertEqual(slow, [], "over the time budget")
 
     def test_deadline_withholds(self):

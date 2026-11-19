@@ -4,63 +4,60 @@ The guard requires plugins.hook_callback_timeout = 0 and runs its scan synchrono
 gateway's event loop (hooks._dispatch), so a slow scan freezes the whole gateway while the
 heartbeat thread keeps reporting "healthy".
 
-Sizes here are small on purpose (the whole file runs in about 10 seconds). The cost is quadratic:
+Sizes here are small on purpose (the whole file runs in about 10 seconds). The cost was quadratic:
 20,000 newlines took 13 s on the review machine and the 120,000-character limit extrapolates to
 about 8 minutes for ONE message part.
+
+Time limits are machine-relative (tests/unit/lineartime.py; fixed 0.25 s limits went red on slower
+CI runners, 2026-11-18): each hostile shape may cost at most MAX_RATIO x scanning ordinary prose of
+the same length, and doubling it may at most triple the time. Both are measured in the same test.
 """
 from __future__ import annotations
 
-import time
 import unittest
 
 from tests.review._review import known_open
 from tests.unit import fakes
 from tests.unit.fakes import dispatch, ev, make_guard
+from tests.unit.lineartime import Linear
 from hearthward_guard.threshold import scan
 
-BUDGET_S = 0.25     # a linear scan of 10,000 characters takes a few milliseconds
+MAX_RATIO = 3.0     # worst measured 2026-11-18: 0.55x ('<!--'); the original H1 bugs were 20x and more
 NL = chr(10)
 
 
-def seconds(text: str, channel: str = "attachment", runs: int = 1) -> float:
-    best = 1e9
-    for _ in range(runs):
-        t = time.perf_counter()
-        scan.scan_text(text, channel)
-        best = min(best, time.perf_counter() - t)
-    return best
+def scanner(channel: str = "attachment") -> Linear:
+    return Linear(lambda text: scan.scan_text(text, channel))
 
 
 class TestControls(unittest.TestCase):
     def test_ordinary_text_of_the_same_size_is_fast(self):
-        self.assertLess(seconds("word " * 2000), BUDGET_S)
-        self.assertLess(seconds(("line of text" + NL) * 800), BUDGET_S)
+        """The baseline every ratio below uses must itself scale linearly."""
+        self.assertEqual(scanner().baseline_problems(10_000), [])
+        self.assertEqual(scanner().problems(("line of text" + NL) * 800, "short lines", MAX_RATIO), [])
 
 
 class TestQuadraticRegex(unittest.TestCase):
+    def assertLinear(self, text: str, label: str, channel: str = "attachment"):
+        self.assertEqual(scanner(channel).problems(text, label, MAX_RATIO), [])
+
     def test_H1_blank_lines(self):
         """patterns.py:150 marker rule (line start, optional whitespace, role word) with re.M:
         every line start re-reads all the whitespace after it."""
-        t = seconds("Notes" + NL * 6000 + "end")
-        self.assertLess(t, BUDGET_S, f"6,000 blank lines took {t:.1f}s")
+        self.assertLinear("Notes" + NL * 6000 + "end", "6,000 blank lines")
 
     def test_H1_blank_lines_grow_quadratically(self):
-        a = seconds("x" + NL * 2000 + "y", runs=2)
-        b = seconds("x" + NL * 4000 + "y", runs=2)
-        self.assertLess(b, 3.0 * max(a, 0.005), f"doubling the input multiplied the time by {b / max(a, 1e-6):.1f}")
+        self.assertLinear("x" + NL * 4000 + "y", "4,000 blank lines")
 
     def test_H1_spaces_then_newlines(self):
-        t = seconds("x" + (" " + NL) * 4000 + "y", "tool_result")
-        self.assertLess(t, BUDGET_S, f"8,000 characters of space+newline took {t:.1f}s")
+        self.assertLinear("x" + (" " + NL) * 4000 + "y", "8,000 characters of space+newline", "tool_result")
 
     def test_H1_unclosed_html_comments(self):
         """normalize.py:52 comment pattern rescans to the end of the text for every opener."""
-        t = seconds("<!--" * 7000)
-        self.assertLess(t, BUDGET_S, f"28,000 characters of '<!--' took {t:.1f}s")
+        self.assertLinear("<!--" * 7000, "28,000 characters of '<!--'")
 
     def test_H1_role_word_then_spaces(self):
-        t = seconds("system" + " " * 40_000 + "x")
-        self.assertLess(t, BUDGET_S, f"'system' + 40,000 spaces took {t:.1f}s")
+        self.assertLinear("system" + " " * 40_000 + "x", "'system' + 40,000 spaces")
 
 
 class TestMemory(unittest.TestCase):
