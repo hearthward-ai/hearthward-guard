@@ -31,7 +31,7 @@ single quotes:
 hermes config set plugins.entries.hearthward-guard.settings.ocr.languages '["eng", "chi_sim"]'
 ```
 
-**After every change**, restart Hermes ([install guide, step 4.6](INSTALL.md#46-restart-hermes)) and
+**After every change**, restart Hermes ([install guide, step 4.7](INSTALL.md#47-restart-hermes)) and
 run the preflight check again ([step 5.1](INSTALL.md#51-run-the-preflight-check)):
 
 ```bash
@@ -46,8 +46,28 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 
 **The guard is strict about its settings.** A misspelled key, a wrong type (text where a number belongs)
 or a value outside the allowed range does not get ignored: the guard then refuses every message until
-you fix it, and the preflight check prints `FAIL: guard: ...` naming the key. It never prints the value
-itself. This is on purpose: a typo must not quietly switch a protection off.
+you fix it, and the preflight check prints `FAIL: guard: ...` naming the key. It does not print most
+values; a few Knock and `safe_link_hosts` messages quote the wrong entry so you can find it. This is on
+purpose: a typo must not quietly switch a protection off.
+
+**But a correctly typed setting that switches a protection off takes effect without any question.**
+Only Knock asks for a confirmation (`knock.unsafe_override`). These settings weaken the guard as soon
+as Hermes restarts, and the preflight check still prints `OK`:
+
+| Setting | Weakens the guard when set to |
+|---|---|
+| `mode` | `report` (nothing is enforced) |
+| `require_no_hook_timeout` | `false` |
+| `threshold.unscanned_media` | `owners` or `allow` |
+| `threshold.weak_action_content` | `pass` |
+| `threshold.scan_attachments`, `scan_tool_results`, `scan_reply_context`, `fence_tool_results` | `false` |
+| `second_check.probes` | `false` |
+| `second_check.tamper_retry` | `true` |
+| `second_check.allow_remote` | `true` (message text may leave your computer) |
+| `gatehouse.strip_invisible`, `withhold_secrets`, `block_media_directives`, `block_markdown_images`, `block_query_links` | `false` |
+| `log.raw_text` | `true` (message text is written to the log) |
+
+Change these only on purpose, and check `/guard` and this page afterwards.
 
 **Leave a setting out to keep its default.** You only need to write the settings you want to change.
 
@@ -77,7 +97,7 @@ These are Hermes's own settings, not the guard's. The preflight check fails unti
 | `gateway.trust_recent_files` | `false` | Stops the assistant from sending files just because they are new. Hermes's default is `true`. |
 | `platform_toolsets.<platform>` | present for every chat app you use, naming only allowed toolsets | Without an entry, Hermes gives the assistant its default tools on that chat app. The preflight check allows only `no_mcp` unless you pass `--allow-toolset NAME`. |
 | `approvals.mode` | `manual` (recommended) | Hermes 0.23.1 defaults to `smart`, where a model answers tool approval requests. The guard's tool policy (Knock) only asks you when a person answers them. Without `manual`, every "ask" becomes "deny", and preflight prints a `NOTE`. |
-| `approvals.approvers` | only owners (if you set it) | On a chat app, Knock only asks when the people who may approve are all owners. |
+| `approvals.approvers` | set, and only owners (needed only if your chat app has tools) | On a chat app, Knock asks you only when this names owners and nobody else. Unset (Hermes's default `*`, anyone) means every tool call that needs your approval is refused. Set it with your own user ID: `hermes config set approvals.approvers '["123456789"]'`. |
 | `gateway.platforms.<platform>` admin lists, such as `extra.allow_admin_from` | only owners | Hermes lets admins answer approval requests too. Knock checks that every admin is an owner; if not, "ask" becomes "deny". |
 
 **Recommendation:** set all of these exactly as the install guide shows. Keep `platform_toolsets` at
@@ -92,7 +112,13 @@ Some of Hermes's environment variables override its settings file, so the guard 
 |---|---|---|
 | `HERMES_MEDIA_DELIVERY_STRICT` | If it is set to anything other than on (`1`, `true`, `yes`, `on`), it overrides `gateway.strict` and preflight fails. | Do not set it. |
 | `HERMES_MEDIA_TRUST_RECENT_FILES` | If it is set to anything other than off (`0`, `false`, `no`, `off`), it overrides `gateway.trust_recent_files` and preflight fails. | Do not set it. |
-| `HERMES_MEDIA_ALLOW_DIRS` | If it is set at all, preflight fails (it widens the folders files can be sent from). | Do not set it. |
+| `HERMES_MEDIA_ALLOW_DIRS` | If it is set to anything but an empty value, preflight fails (it widens the folders files can be sent from). | Do not set it. |
+
+**Limit:** the preflight check only sees the variables of the terminal it runs in. Hermes also reads
+variables from its own file `~/.hermes/.env` (and a background service can set its own), and the
+running guard does not check the three `HERMES_MEDIA_*` variables. So a `HERMES_MEDIA_*` line in
+`~/.hermes/.env` weakens file sending while preflight still prints `OK`. Check that file yourself:
+`grep -c '^HERMES_MEDIA_' ~/.hermes/.env` should print `0` (the install guide does this in step 5.1).
 | `HERMES_YOLO_MODE` | If it is on, Hermes approves every tool call by itself, so Knock turns every "ask" into "deny". | Do not set it. |
 | `HERMES_HOME` | The guard keeps its files in `$HERMES_HOME/hearthward-guard` (normally `~/.hermes/hearthward-guard`). | Leave it as Hermes sets it. |
 | `HEARTHWARD_GUARD_HEARTBEAT` | `1` forces the heartbeat file on, `0` forces it off. Unset: on only in the gateway process. | Leave it unset. |
@@ -151,9 +177,9 @@ server is down or answers in the wrong shape, the message is held.
 
 | Setting | Default | What it does | When to change | Recommendation |
 |---|---|---|---|---|
-| `endpoint` | `""` (off) | Web address of the model server's OpenAI-style API, ending in `/v1`, for example `http://127.0.0.1:9931/v1`. | Set it to turn the model check on. | A server on your own computer |
+| `endpoint` | `""` (off) | Web address of the model server's OpenAI-style API, ending in `/v1`, for example `http://127.0.0.1:9931/v1` for `llama-server` started with `--port 9931` (recent llama.cpp builds use 9931 by default, older ones 8080, so always pass the port). | Set it to turn the model check on. | A server on your own computer |
 | `model` | `local` | Model name sent with each request. llama.cpp ignores it; Ollama needs the exact name (for example `qwen3:8b`). | Set it for Ollama or LM Studio. | Your server's model name |
-| `json_mode` | `schema` | How the answer's shape is requested. `schema`: llama.cpp (tested). `json_object`: Ollama, LM Studio (not tested by us). `none`: no request. | Match it to your server. | `schema` for llama.cpp |
+| `json_mode` | `schema` | How the answer's shape is requested. `schema`: llama.cpp (tested) and LM Studio (not tested by us). `json_object`: Ollama (not tested by us). `none`: no request. | Match it to your server. | `schema`, except `json_object` for Ollama |
 | `allow_remote` | `false` | Allow an endpoint that is not on this computer. That sends message text off your computer. | Only if you trust that machine and the network to it. | `false` |
 | `api_key_env` | `""` | The NAME of an environment variable that holds a key for the server. Never the key itself. | Only if your server needs a key. | `""` |
 | `timeout_s` | `8.0` (0.5 to 600) | Seconds to wait for one answer. Too slow means held. | Raise on a slow computer if messages are held as "not available". | `8.0` |
@@ -188,7 +214,7 @@ server is down or answers in the wrong shape, the message is held.
 | `block_media_directives` | `true` | Remove file-sending instructions and local file paths from replies. | Never. | `true` |
 | `block_markdown_images` | `true` | Turn images in replies into their text label (your chat app would otherwise load them from the web, which can leak data). | Never. | `true` |
 | `block_query_links` | `true` | Remove links that look like they carry data out (encoded pieces, or words from your conversation). | Never. | `true` |
-| `safe_link_hosts` | `[]` (up to 64) | Exact host names whose links are never removed, for example `["docs.python.org"]`. Sites where anyone can publish pages or forms (such as `docs.google.com` or `github.io`) are refused. | If a site you trust keeps losing its links. | Empty |
+| `safe_link_hosts` | `[]` (up to 64) | Exact host names whose links are never removed, for example `["docs.python.org"]`. Sites where anyone can publish pages or forms (such as `docs.google.com` or `github.io`) are not allowed here: listing one is a settings error, so the guard refuses every message until you remove it. | If a site you trust keeps losing its links. | Empty |
 | `id_patterns` | `[]` (up to 32) | Regular expressions (text patterns) for your own ID formats; matches become `(id removed)`. | If you want an ID format kept out of replies. | Empty |
 
 ## Guard settings: `ocr` (pictures and the scam shield)
@@ -217,7 +243,7 @@ server is down or answers in the wrong shape, the message is held.
 | `log.raw_text` | `false` | Write message text into the guard log. `false` keeps message text out of it. | Only while you debug, then switch it back. | `false` |
 | `log.path` | `""` | Where the guard log is written. Empty: `~/.hermes/hearthward-guard/events.jsonl`. | Rarely. | `""` |
 | `heartbeat.dir` | `""` | Folder for the heartbeat file (a small file the running guard rewrites to show it is alive and healthy). Empty: `~/.hermes/hearthward-guard/status`. | Rarely. | `""` |
-| `heartbeat.interval_s` | `15` (2 to 3600) | Seconds between heartbeat updates. | Rarely. | `15` |
+| `heartbeat.interval_s` | `15` (2 to 3600) | Seconds between heartbeat updates. `preflight --heartbeat` accepts a heartbeat up to 60 seconds old (`--max-age`), so above about 50 it fails unless you raise `--max-age` too. | Rarely. | `15` |
 
 ## Guard settings: `knock` (tool policy)
 
@@ -225,8 +251,10 @@ Knock decides which tool calls run, which are refused, and which ask you first. 
 means text that did not come from you: other people's messages, attachments, web pages, tool output.
 A conversation that has seen outside content is called **tainted**.
 
-Some settings switch checks off. Those need `knock.unsafe_override: true` as well, and `/guard` lists
-them.
+Some Knock settings switch checks off. Those need `knock.unsafe_override: true` as well, and `/guard`
+lists them. This confirmation exists for Knock only; see
+[the list above](#before-you-change-anything) for the other settings that weaken the guard without
+asking.
 
 | Setting | Default | What it does | When to change | Recommendation |
 |---|---|---|---|---|
@@ -239,7 +267,7 @@ them.
 | `ask_scope` | `call` | What "always" on an approval request covers. `call`: this exact call. `tool`: this tool for this conversation, today only (needs `unsafe_override`). | Rarely. | `call` |
 | `tools` | `{}` | Your own classes for tools, `{tool name or pattern: class}`. Classes: `read` (no effects, output trusted), `source` (no effects, output is outside content), `source:private` (reads your private data), `source:net` (sends text off the computer), `act` (has effects), `act+source` (both). Making a built-in tool less strict needs `unsafe_override`. | When you add tools Knock does not know. | Empty |
 | `job_allowlists` | `{}` | Lists of the only tools allowed, per key: `*` (everything), `cron:*` (all scheduled jobs), `cron:<job id>`, `platform:<name>`. | To limit a scheduled job or a chat app to a few tools. | Empty |
-| `trusted_cron_jobs` | `[]` | Scheduled jobs whose prompt counts as yours, not as outside content. Write `<job id>:<sha256 of its prompt>` so a changed prompt stops being trusted. | Only for jobs you wrote yourself. | Empty |
+| `trusted_cron_jobs` | `[]` | Scheduled jobs whose prompt counts as yours, not as outside content. `<job id>:<sha256 of its prompt>` trusts only that exact prompt: if the prompt changes, it counts as outside content again. A bare `<job id>` without the hash is also accepted, but then trusts **any** future prompt of that job, including one changed by a tool or an attacker. | Only for jobs you wrote yourself. | Empty; if used, always with the hash |
 | `never_allow` | `[]` (up to 100) | Your own never-allowed rules: `{id, tools: [names], args: [patterns], label}`. | To forbid more actions outright. | Empty |
 | `never_allow_disable` | `[]` | Built-in never-allowed rules to switch off: `money`, `trades`, `passwords`, `id_numbers`, `vault`, `sign_in`, `guard_off`. Needs `unsafe_override`. | Not recommended. | Empty |
 | `unsafe_override` | `false` | Required by the settings above that switch checks off. | Only together with such a setting. | `false` |

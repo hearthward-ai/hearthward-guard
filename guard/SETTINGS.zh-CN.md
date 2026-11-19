@@ -22,7 +22,7 @@ hermes config set plugins.entries.hearthward-guard.settings.holds.timeout_min 60
 hermes config set plugins.entries.hearthward-guard.settings.ocr.languages '["eng", "chi_sim"]'
 ```
 
-**每次改完**都要重启 Hermes（[安装指南第 4.6 步](INSTALL.zh-CN.md#step-4-6)），并重新运行一次预检（[第 5.1 步](INSTALL.zh-CN.md#step-5-1)）：
+**每次改完**都要重启 Hermes（[安装指南第 4.7 步](INSTALL.zh-CN.md#step-4-7)），并重新运行一次预检（[第 5.1 步](INSTALL.zh-CN.md#step-5-1)）：
 
 ```bash
 bash ~/hearthward-preflight.sh
@@ -34,7 +34,24 @@ bash ~/hearthward-preflight.sh
 hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 ```
 
-**守卫对设置很严格。** 键名拼错、类型不对（该填数字的地方填了文字）或数值超出允许范围，都不会被悄悄忽略：守卫会拒收所有消息，直到你改正为止；预检会打印 `FAIL: guard: ...` 并指出是哪个键，但不会打印值本身。这是有意为之：一个笔误不应该悄无声息地关掉某项保护。
+**守卫对设置很严格。** 键名拼错、类型不对（该填数字的地方填了文字）或数值超出允许范围，都不会被悄悄忽略：守卫会拒收所有消息，直到你改正为止；预检会打印 `FAIL: guard: ...` 并指出是哪个键。大多数情况下它不打印值；少数 Knock 和 `safe_link_hosts` 的提示会引用写错的那一项，方便你找到它。这是有意为之：一个笔误不应该悄无声息地关掉某项保护。
+
+**但是，拼写正确、用来关掉某项保护的设置，会不经任何确认直接生效。** 只有 Knock 会要求确认（`knock.unsafe_override`）。下面这些设置在 Hermes 重启后立刻削弱守卫，而预检照样打印 `OK`：
+
+| 设置 | 设成这个值时会削弱守卫 |
+|---|---|
+| `mode` | `report`（什么都不执行） |
+| `require_no_hook_timeout` | `false` |
+| `threshold.unscanned_media` | `owners` 或 `allow` |
+| `threshold.weak_action_content` | `pass` |
+| `threshold.scan_attachments`、`scan_tool_results`、`scan_reply_context`、`fence_tool_results` | `false` |
+| `second_check.probes` | `false` |
+| `second_check.tamper_retry` | `true` |
+| `second_check.allow_remote` | `true`（消息内容可能离开你的电脑） |
+| `gatehouse.strip_invisible`、`withhold_secrets`、`block_media_directives`、`block_markdown_images`、`block_query_links` | `false` |
+| `log.raw_text` | `true`（消息原文会写进日志） |
+
+只在确有需要时才改这些，改完后看看 `/guard` 和本页。
 
 **不写的设置保持默认值。** 只需要写你想改的那几项。
 
@@ -64,7 +81,7 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 | `gateway.trust_recent_files` | `false` | 不让助手仅仅因为文件是新的就把它发出去。Hermes 默认是 `true`。 |
 | `platform_toolsets.<平台>` | 你用的每个聊天软件都要有一项，且只写允许的工具集 | 没有这一项时，Hermes 会在该聊天软件上给助手默认工具。预检只接受 `no_mcp`，除非你加上 `--allow-toolset 名字`。 |
 | `approvals.mode` | `manual`（建议） | Hermes 0.23.1 默认是 `smart`，即由模型来回答工具审批请求。守卫的工具策略（Knock）只有在由人来回答时才会问你。不设为 `manual` 时，所有“询问”都会变成“拒绝”，预检会打印一行 `NOTE`。 |
-| `approvals.approvers` | 只有主人（如果你设了它） | 在聊天软件上，只有当能审批的人全都是主人时，Knock 才会询问。 |
+| `approvals.approvers` | 已设置，且只有主人（只有聊天软件上有工具时才需要） | 在聊天软件上，只有当它列出的全是主人、没有别人时，Knock 才会询问你。不设置（Hermes 默认是 `*`，即任何人）时，所有需要你审批的工具调用都会被拒绝。用你自己的用户 ID 设置：`hermes config set approvals.approvers '["123456789"]'`。 |
 | `gateway.platforms.<平台>` 下的管理员列表，如 `extra.allow_admin_from` | 只有主人 | Hermes 也允许管理员回答审批请求。Knock 会核对每个管理员是不是主人；不是的话，“询问”会变成“拒绝”。 |
 
 **建议：** 完全按安装指南设置这些项。在用熟守卫之前，`platform_toolsets` 保持 `["no_mcp"]`（聊天软件上不给工具）。
@@ -77,7 +94,9 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 |---|---|---|
 | `HERMES_MEDIA_DELIVERY_STRICT` | 只要设成“开”（`1`、`true`、`yes`、`on`）以外的值，就会覆盖 `gateway.strict`，预检失败。 | 不要设置。 |
 | `HERMES_MEDIA_TRUST_RECENT_FILES` | 只要设成“关”（`0`、`false`、`no`、`off`）以外的值，就会覆盖 `gateway.trust_recent_files`，预检失败。 | 不要设置。 |
-| `HERMES_MEDIA_ALLOW_DIRS` | 只要设置了，预检就失败（它会扩大可以发送文件的文件夹范围）。 | 不要设置。 |
+| `HERMES_MEDIA_ALLOW_DIRS` | 只要设成非空的值，预检就失败（它会扩大可以发送文件的文件夹范围）。 | 不要设置。 |
+
+**局限：** 预检只能看到它所在终端里的变量。Hermes 还会从自己的 `~/.hermes/.env` 文件读取变量（后台服务也可能有自己的变量），而运行中的守卫不检查这三个 `HERMES_MEDIA_*` 变量。所以，`~/.hermes/.env` 里的一行 `HERMES_MEDIA_*` 会放宽文件发送，预检却照样打印 `OK`。请自己检查这个文件：`grep -c '^HERMES_MEDIA_' ~/.hermes/.env` 应该输出 `0`（安装指南第 5.1 步就做了这个检查）。
 | `HERMES_YOLO_MODE` | 开启时 Hermes 会自动批准所有工具调用，所以 Knock 会把所有“询问”变成“拒绝”。 | 不要设置。 |
 | `HERMES_HOME` | 守卫把自己的文件放在 `$HERMES_HOME/hearthward-guard`（通常是 `~/.hermes/hearthward-guard`）。 | 保持 Hermes 的设置。 |
 | `HEARTHWARD_GUARD_HEARTBEAT` | `1` 强制开启心跳文件，`0` 强制关闭。不设置时只在网关进程里开启。 | 不要设置。 |
@@ -133,9 +152,9 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 
 | 设置 | 默认值 | 作用 | 什么时候改 | 建议 |
 |---|---|---|---|---|
-| `endpoint` | `""`（关闭） | 模型服务的 OpenAI 风格接口地址，以 `/v1` 结尾，例如 `http://127.0.0.1:9931/v1`。 | 填上它就开启模型复查。 | 你自己电脑上的服务 |
+| `endpoint` | `""`（关闭） | 模型服务的 OpenAI 风格接口地址，以 `/v1` 结尾，例如用 `--port 9931` 启动的 `llama-server` 就是 `http://127.0.0.1:9931/v1`（较新的 llama.cpp 默认用 9931，较旧的默认用 8080，所以一定要写明端口）。 | 填上它就开启模型复查。 | 你自己电脑上的服务 |
 | `model` | `local` | 每次请求附带的模型名。llama.cpp 不看它；Ollama 需要准确的名字（例如 `qwen3:8b`）。 | 用 Ollama 或 LM Studio 时要设置。 | 你的服务里的模型名 |
-| `json_mode` | `schema` | 用什么方式要求回答的格式。`schema`：llama.cpp（测试过）。`json_object`：Ollama、LM Studio（我们没测试过）。`none`：不要求。 | 按你的服务来设。 | llama.cpp 用 `schema` |
+| `json_mode` | `schema` | 用什么方式要求回答的格式。`schema`：llama.cpp（测试过）和 LM Studio（我们没测试过）。`json_object`：Ollama（我们没测试过）。`none`：不要求。 | 按你的服务来设。 | `schema`；Ollama 用 `json_object` |
 | `allow_remote` | `false` | 允许不在本机上的地址。这样消息内容会离开你的电脑。 | 只有你信任那台机器和通往它的网络时。 | `false` |
 | `api_key_env` | `""` | 存放服务密钥的环境变量的**名字**，绝不是密钥本身。 | 只有服务需要密钥时。 | `""` |
 | `timeout_s` | `8.0`（0.5 到 600） | 等一次回答的秒数。太慢就暂扣。 | 电脑慢、消息常因“暂时无法检查”被暂扣时调高。 | `8.0` |
@@ -170,7 +189,7 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 | `block_media_directives` | `true` | 去掉回复里发送文件的指令和本地文件路径。 | 永远不改。 | `true` |
 | `block_markdown_images` | `true` | 把回复里的图片换成它的文字说明（否则聊天软件会从网上加载图片，可能泄露数据）。 | 永远不改。 | `true` |
 | `block_query_links` | `true` | 去掉看起来在往外带数据的链接（编码过的片段，或你们对话里的原话）。 | 永远不改。 | `true` |
-| `safe_link_hosts` | `[]`（最多 64 个） | 链接永远不会被去掉的确切主机名，例如 `["docs.python.org"]`。任何人都能发布网页或表单的网站（如 `docs.google.com`、`github.io`）不能加。 | 你信任的网站链接总被去掉时。 | 空 |
+| `safe_link_hosts` | `[]`（最多 64 个） | 链接永远不会被去掉的确切主机名，例如 `["docs.python.org"]`。任何人都能发布网页或表单的网站（如 `docs.google.com`、`github.io`）不能加：加了算设置错误，守卫会拒收所有消息，直到你把它删掉。 | 你信任的网站链接总被去掉时。 | 空 |
 | `id_patterns` | `[]`（最多 32 个） | 你自己的编号格式的正则表达式（文字模式）；匹配到的会变成 `(id removed)`。 | 想让某种编号格式不出现在回复里时。 | 空 |
 
 ## 守卫设置：`ocr`（图片和防诈骗）
@@ -199,13 +218,13 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 | `log.raw_text` | `false` | 把消息原文写进守卫日志。`false` 表示日志里不留消息原文。 | 只在排查问题时临时打开，之后关掉。 | `false` |
 | `log.path` | `""` | 守卫日志写在哪里。为空：`~/.hermes/hearthward-guard/events.jsonl`。 | 很少需要。 | `""` |
 | `heartbeat.dir` | `""` | 心跳文件所在的文件夹（运行中的守卫会不断重写这个小文件，表示自己还活着、状态正常）。为空：`~/.hermes/hearthward-guard/status`。 | 很少需要。 | `""` |
-| `heartbeat.interval_s` | `15`（2 到 3600） | 心跳更新的间隔秒数。 | 很少需要。 | `15` |
+| `heartbeat.interval_s` | `15`（2 到 3600） | 心跳更新的间隔秒数。`preflight --heartbeat` 只接受 60 秒以内的心跳（`--max-age`），所以超过约 50 秒时，除非同时调大 `--max-age`，否则会失败。 | 很少需要。 | `15` |
 
 ## 守卫设置：`knock`（工具策略）
 
 Knock 决定哪些工具调用可以运行、哪些被拒绝、哪些要先问你。“外部内容”指不是你写的文字：别人的消息、附件、网页、工具输出。看到过外部内容的对话叫做**被污染**（tainted）。
 
-有些设置会关掉某项检查。这些设置还需要同时设 `knock.unsafe_override: true`，`/guard` 会把它们列出来。
+有些 Knock 设置会关掉某项检查。这些设置还需要同时设 `knock.unsafe_override: true`，`/guard` 会把它们列出来。这种确认只有 Knock 有；其他不经确认就会削弱守卫的设置见[上面的列表](#改设置之前)。
 
 | 设置 | 默认值 | 作用 | 什么时候改 | 建议 |
 |---|---|---|---|---|
@@ -218,7 +237,7 @@ Knock 决定哪些工具调用可以运行、哪些被拒绝、哪些要先问�
 | `ask_scope` | `call` | 审批请求上的“总是允许”覆盖什么。`call`：只这一次调用。`tool`：这个工具在本次对话中、仅限今天（需要 `unsafe_override`）。 | 很少需要。 | `call` |
 | `tools` | `{}` | 你给工具定的类别，`{工具名或模式: 类别}`。类别：`read`（没有效果，输出可信）、`source`（没有效果，输出算外部内容）、`source:private`（读取你的私人数据）、`source:net`（把文字发到电脑外面）、`act`（有效果）、`act+source`（两者都是）。让内置工具变宽松需要 `unsafe_override`。 | 你加了 Knock 不认识的工具时。 | 空 |
 | `job_allowlists` | `{}` | 按键列出唯一允许的工具：`*`（全部）、`cron:*`（所有定时任务）、`cron:<任务ID>`、`platform:<名字>`。 | 想把某个定时任务或某个聊天软件限制在少数几个工具时。 | 空 |
-| `trusted_cron_jobs` | `[]` | 提示词算作你自己写的（而不是外部内容）的定时任务。写成 `<任务ID>:<提示词的 sha256>`，这样提示词一改就不再被信任。 | 只用于你自己写的任务。 | 空 |
+| `trusted_cron_jobs` | `[]` | 提示词算作你自己写的（而不是外部内容）的定时任务。`<任务ID>:<提示词的 sha256>` 只信任这一份确切的提示词：提示词一改，就重新算作外部内容。只写 `<任务ID>`、不带哈希也能通过，但这样会信任这个任务**以后的任何**提示词，包括被工具或攻击者改过的。 | 只用于你自己写的任务。 | 空；要用的话一定带上哈希 |
 | `never_allow` | `[]`（最多 100 条） | 你自己的“永不允许”规则：`{id, tools: [名字], args: [模式], label}`。 | 想直接禁止更多操作时。 | 空 |
 | `never_allow_disable` | `[]` | 要关掉的内置“永不允许”规则：`money`、`trades`、`passwords`、`id_numbers`、`vault`、`sign_in`、`guard_off`。需要 `unsafe_override`。 | 不建议。 | 空 |
 | `unsafe_override` | `false` | 上面那些会关掉检查的设置都需要它。 | 只和那类设置一起用。 | `false` |
