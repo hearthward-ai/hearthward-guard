@@ -2,7 +2,7 @@
 
 # Hearthward 守卫：安装指南
 
-步骤核对日期：2026-11-18。守卫版本 0.9.3。Hermes Agent 版本 0.23.1。
+步骤核对日期：2026-11-19。守卫版本 0.9.3。Hermes Agent 版本 0.23.3（0.23.1 也测试过）。
 
 这份指南带你从一台什么都没装的电脑，一直做到守卫运行起来并通过检查。你不需要会编程。请按顺序一步一步做。
 
@@ -58,7 +58,7 @@
 
 ### 2.1 聊天软件
 
-Hermes Agent 0.23.1 能连接下面这些聊天软件。设置方法请看 Hermes 为每个软件写的页面（链接指向 Hermes 当前的文档，我们在 2026-11-18 逐个打开核对过）。这份指南不重复那些步骤。
+Hermes Agent 0.23.3 能连接下面这些聊天软件。设置方法请看 Hermes 为每个软件写的页面（链接指向 Hermes 当前的文档，我们在 2026-11-19 逐个打开核对过）。这份指南不重复那些步骤。
 
 **和守卫一起测试过的：只有 Discord，而且只是通过替身**（真实的 Hermes 代码，加上模拟的 Discord 连接）。其他软件都还没测试；下一个守卫版本计划把它们全部测一遍。
 
@@ -157,12 +157,12 @@ sudo apt update && sudo apt install -y git curl python3
 
 <a id="step-3-3"></a>
 
-### 3.3 下载 Hermes Agent 0.23.1 版的安装程序
+### 3.3 下载 Hermes Agent 0.23.3 版的安装程序
 
-守卫需要 Hermes Agent **0.23.1**。更新的版本没有测试过。下面这条命令下载 0.23.1 版本时的官方安装程序：
+守卫在 Hermes Agent **0.23.3**（以及 0.23.1）上测试过。更新的版本没有测试过。下面这条命令下载 0.23.3 版本时的官方安装程序：
 
 ```bash
-curl -fsSL -o ~/install-hermes.sh https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.1/scripts/install.sh
+curl -fsSL -o ~/install-hermes.sh https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.3/scripts/install.sh
 ```
 
 应该看到：什么都不显示，`$` 那一行又出现了。
@@ -179,20 +179,20 @@ sha256sum ~/install-hermes.sh
 ```
 
 应该看到：
-`abf338605dae6dd28d101673ac6aed7995c955745db46d47676bc591a7957209`，后面跟着文件名。
+`c73dad4dcf7c9ecadb98578e28cc763d23d7be3fa1b513545319038795493214`，后面跟着文件名。
 如果没有：不要运行它。用 `rm ~/install-hermes.sh` 删掉，重做第 3.3 步。
 
 <a id="step-3-5"></a>
 
-### 3.5 安装 Hermes Agent 0.23.1
+### 3.5 安装 Hermes Agent 0.23.3
 
-这条命令只安装 0.23.1 这一个版本（由 `--commit` 指定），不装可选的网页浏览器和电脑操控组件，也先不开始 Hermes 的设置问答（`--skip-setup`）。
+这条命令只安装 0.23.3 这一个版本（由 `--commit` 指定），不装可选的网页浏览器和电脑操控组件，也先不开始 Hermes 的设置问答（`--skip-setup`）。
 
 ```bash
-bash ~/install-hermes.sh --commit 3b421578588243f920886e6fe79a6faa87ea026e --skip-setup --skip-browser --skip-computer-use
+bash ~/install-hermes.sh --commit caafe5389ae585ef77387a962aee05b1bcf17029 --skip-setup --skip-browser --skip-computer-use
 ```
 
-应该看到：`✓ prerequisites ok (git, curl)`（前置条件满足），然后是 `Cloning ... (main)` 和 `Cloning into ...`（正在克隆；它先下载主线，再切换到固定的版本，后面会有一行 `Checking out 3b421578...`）。**这一步可能会停很久，看不到任何进度**（我们测试时大约 30 分钟，它在从 GitHub 下载 Hermes）。不要关窗口。之后是很多以 `✓` 开头的行，最后是 `✓ Hermes Agent install complete. Run: hermes`（安装完成）和 `→ Reload your shell to use hermes: open a new terminal, or run: source ~/.bashrc`（重新加载命令行后才能用 hermes）。
+应该看到：`✓ prerequisites ok (git, curl)`（前置条件满足），然后是 `Cloning ... (main)` 和 `Cloning into ...`（正在克隆；它先下载主线，再切换到固定的版本，后面会有一行 `Checking out caafe5389ae5...`）。**这一步可能会停很久，看不到任何进度**（我们测试时从几分钟到大约 30 分钟不等，它在从 GitHub 下载 Hermes）。不要关窗口。之后是很多以 `✓` 开头的行，最后是 `✓ Hermes Agent install complete. Run: hermes`（安装完成）和 `→ Reload your shell to use hermes: open a new terminal, or run: source ~/.bashrc`（重新加载命令行后才能用 hermes）。
 现在**先不要**运行 `hermes`。
 如果没有：看[常见问题](#section-10)。
 
@@ -205,8 +205,8 @@ source ~/.bashrc
 hermes --version
 ```
 
-应该看到：第一行是 `Hermes Agent v0.23.1 (2026.9.24) · stable · local 3b4215785882`。
-它可能还会说 `Update available — run 'hermes update'`（有可用更新）。**不要更新**（见下文）。
+应该看到：第一行是 `Hermes Agent v0.23.3 (2026.9.24) · stable · local caafe5389ae5`。
+后面有一行 `Up to date`（已是最新）；等更新的 Hermes 发布后，这里会变成 `Update available — run 'hermes update'`（有可用更新）。**不要更新**（见下文）。
 如果没有：如果显示 `hermes: command not found`（找不到命令），关掉终端，重新打开一个（第 3.1 步），再运行一次 `hermes --version`。
 
 **不要更新 Hermes。** 永远不要运行 `hermes update`，也不要在聊天软件里发 `/update`。这两者都会把你换到更新的、没测试过的版本。关掉更新提醒：
@@ -380,7 +380,7 @@ hermes config set plugins.entries.hearthward-guard.settings.owners '["discord:12
 hermes plugins enable hearthward-guard
 ```
 
-应该看到：`✓ Plugin hearthward-guard enabled.`（插件已启用）。
+应该看到：`✓ Plugin hearthward-guard enabled.`（插件已启用）。Hermes 可能会先显示 `→ Installing Python dependencies…` 和 `✓ Installing Python dependencies`（正在安装 Python 组件），这是正常的。
 
 <a id="step-4-4"></a>
 
@@ -777,7 +777,7 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 
 ### 8.2 更新 Hermes Agent
 
-不要更新。守卫只在 Hermes Agent 0.23.1 上测试过。等守卫的某个版本支持更新的 Hermes 时，它的说明和这份指南会写明，并给出新的版本号。
+不要更新。守卫只在 Hermes Agent 0.23.3 和 0.23.1 上测试过。如果你之前照着旧版指南装了 0.23.1，可以继续用它。等守卫的某个版本支持更新的 Hermes 时，它的说明和这份指南会写明，并给出新的版本号。
 
 <a id="section-9"></a>
 
@@ -813,7 +813,7 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 
 | 你看到的 | 意思 | 怎么办 |
 |---|---|---|
-| Hermes 安装程序显示 `Cloning into ...` 之后很久没有动静 | 它在从 GitHub 下载 Hermes。我们测试时大约用了 30 分钟，期间不显示进度。 | 等待。不要关终端。 |
+| Hermes 安装程序显示 `Cloning into ...` 之后很久没有动静 | 它在从 GitHub 下载 Hermes。我们测试时从几分钟到大约 30 分钟不等，期间不显示进度。 | 等待。不要关终端。 |
 | `hermes: command not found` | 终端还没加载新命令。 | 关掉终端，重新打开一个（第 3.1 步），再试一次。 |
 | `sha256sum` 显示的数字不一样 | 文件不是我们测试过的那个。 | 不要使用它。删掉后重新下载。 |
 | `hermes --version` 显示 `Update available` | 有更新的 Hermes。 | 不用理会。不要更新（第 3.6 步）。 |
@@ -869,9 +869,9 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 
 ## 12. 核对过的资料来源
 
-依赖别人软件的那些步骤，都在 2026-11-18 对照下面这些官方页面核对过；之后我们又在一个全新的 Ubuntu 24.04 用户上，从头到尾照着英文版指南做了一遍（聊天软件用的是模拟替身；llama.cpp 的下载、`llama-server --version`、`/health` 以及守卫与 `llama-server` 的连接，是用一个很小的测试模型实际跑过的）：
+依赖别人软件的那些步骤，都在 2026-11-18 对照下面这些官方页面核对过（Hermes Agent 部分于 2026-11-19 针对 0.23.3 重新核对）；之后我们又在一个全新的 Ubuntu 24.04 用户上，从头到尾照着英文版指南做了一遍（聊天软件用的是模拟替身；llama.cpp 的下载、`llama-server --version`、`/health` 以及守卫与 `llama-server` 的连接，是用一个很小的测试模型实际跑过的）：
 
-- Hermes Agent：[README](https://github.com/NousResearch/hermes-agent)、[安装](https://hermes-agent.nousresearch.com/docs/getting-started/installation)、[更新与卸载](https://hermes-agent.nousresearch.com/docs/getting-started/updating)、[WSL 快速入门](https://hermes-agent.nousresearch.com/docs/user-guide/windows-wsl-quickstart)、[Discord 设置](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord)、0.23.1 版安装程序（[v0.23.1 标签下的 `scripts/install.sh`](https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.1/scripts/install.sh)），以及 0.23.1 源码里的插件指南（`website/docs/user-guide/features/plugins.md`）和英文提示文字（`locales/en.yaml`）。标签 `v0.23.1` 指向提交 `3b421578588243f920886e6fe79a6faa87ea026e`。
+- Hermes Agent：[README](https://github.com/NousResearch/hermes-agent)、[安装](https://hermes-agent.nousresearch.com/docs/getting-started/installation)、[更新与卸载](https://hermes-agent.nousresearch.com/docs/getting-started/updating)、[WSL 快速入门](https://hermes-agent.nousresearch.com/docs/user-guide/windows-wsl-quickstart)、[Discord 设置](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord)、0.23.3 版安装程序（[v0.23.3 标签下的 `scripts/install.sh`](https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.3/scripts/install.sh)），以及 0.23.3 源码里的插件指南（`website/docs/user-guide/features/plugins.md`）和英文提示文字（`locales/en.yaml`）。标签 `v0.23.3` 指向提交 `caafe5389ae585ef77387a962aee05b1bcf17029`（也测试过的标签 `v0.23.1` 指向 `3b421578588243f920886e6fe79a6faa87ea026e`）。
 - WSL：微软文档 [Install WSL](https://learn.microsoft.com/en-us/windows/wsl/install)，以及列出了 `Ubuntu-24.04` 的 `wsl --list --online`。
 - Tesseract：[Installation](https://tesseract-ocr.github.io/tessdoc/Installation.html)。
 - llama.cpp：[安装指南](https://github.com/ggml-org/llama.cpp/blob/master/docs/install.md)、[发布页](https://github.com/ggml-org/llama.cpp/releases)（v1.0.0 即编号 b12359）和[服务端 README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)（当前版本默认端口 9931；较旧的版本如 11026 显示 8080；`/health`；支持 `response_format` 的 `/v1/chat/completions`）。

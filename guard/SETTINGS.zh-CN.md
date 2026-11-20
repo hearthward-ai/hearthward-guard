@@ -80,7 +80,7 @@ hermes config unset plugins.entries.hearthward-guard.settings.holds.timeout_min
 | `gateway.strict` | `true` | 限制助手能往外发送哪些文件。Hermes 默认是 `false`。 |
 | `gateway.trust_recent_files` | `false` | 不让助手仅仅因为文件是新的就把它发出去。Hermes 默认是 `true`。 |
 | `platform_toolsets.<平台>` | 你用的每个聊天软件都要有一项，且只写允许的工具集 | 没有这一项时，Hermes 会在该聊天软件上给助手默认工具。预检只接受 `no_mcp`，除非你加上 `--allow-toolset 名字`。 |
-| `approvals.mode` | `manual`（建议） | Hermes 0.23.1 默认是 `smart`，即由模型来回答工具审批请求。守卫的工具策略（Knock）只有在由人来回答时才会问你。不设为 `manual` 时，所有“询问”都会变成“拒绝”，预检会打印一行 `NOTE`。 |
+| `approvals.mode` | `manual`（建议） | Hermes 0.23.1 和 0.23.3 默认都是 `smart`，即由模型来回答工具审批请求。守卫的工具策略（Knock）只有在由人来回答时才会问你。不设为 `manual` 时，所有“询问”都会变成“拒绝”，预检会打印一行 `NOTE`。 |
 | `approvals.approvers` | 已设置，且只有主人（只有聊天软件上有工具时才需要） | 在聊天软件上，只有当它列出的全是主人、没有别人时，Knock 才会询问你。不设置（Hermes 默认是 `*`，即任何人）时，所有需要你审批的工具调用都会被拒绝。用你自己的用户 ID 设置：`hermes config set approvals.approvers '["123456789"]'`。 |
 | `gateway.platforms.<平台>` 下的管理员列表，如 `extra.allow_admin_from` | 只有主人 | Hermes 也允许管理员回答审批请求。Knock 会核对每个管理员是不是主人；不是的话，“询问”会变成“拒绝”。 |
 

@@ -2,7 +2,7 @@
 
 # Hearthward guard: install guide
 
-Steps checked: 2026-11-18. Guard version 0.9.3. Hermes Agent version 0.23.1.
+Steps checked: 2026-11-19. Guard version 0.9.3. Hermes Agent version 0.23.3 (0.23.1 also tested).
 
 This guide takes you from an empty computer to a running, checked guard. You do not need to know
 programming. Do the steps in order, one at a time.
@@ -73,8 +73,8 @@ data-carrying links from replies, and decides which tool actions may run.
 
 ### 2.1 Chat apps
 
-Hermes Agent 0.23.1 connects to the chat apps below. To set one up, follow Hermes's own page for it
-(the links go to Hermes's current documentation; we checked each one on 2026-11-18). This guide
+Hermes Agent 0.23.3 connects to the chat apps below. To set one up, follow Hermes's own page for it
+(the links go to Hermes's current documentation; we checked each one on 2026-11-19). This guide
 does not repeat those steps.
 
 **Tested with the guard: only Discord, and only through a stand-in** (the real Hermes code with a
@@ -182,13 +182,13 @@ You should see: many lines. The last ones say a package was set up, or
 `... is already the newest version`. No line starts with `E:`.
 If not: a line starting with `E:` is an error. Check your internet connection and run it again.
 
-### 3.3 Download the Hermes Agent installer, version 0.23.1
+### 3.3 Download the Hermes Agent installer, version 0.23.3
 
-The guard needs Hermes Agent **0.23.1**. Newer versions are untested. This downloads the official
-installer as it was in version 0.23.1:
+The guard is tested with Hermes Agent **0.23.3** (and 0.23.1). Newer versions are untested. This
+downloads the official installer as it was in version 0.23.3:
 
 ```bash
-curl -fsSL -o ~/install-hermes.sh https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.1/scripts/install.sh
+curl -fsSL -o ~/install-hermes.sh https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.3/scripts/install.sh
 ```
 
 You should see: nothing; the `$` line comes back.
@@ -203,22 +203,22 @@ sha256sum ~/install-hermes.sh
 ```
 
 You should see:
-`abf338605dae6dd28d101673ac6aed7995c955745db46d47676bc591a7957209` and then the file name.
+`c73dad4dcf7c9ecadb98578e28cc763d23d7be3fa1b513545319038795493214` and then the file name.
 If not: do not run it. Delete it with `rm ~/install-hermes.sh` and repeat step 3.3.
 
-### 3.5 Install Hermes Agent 0.23.1
+### 3.5 Install Hermes Agent 0.23.3
 
-This installs exactly version 0.23.1 (`--commit` names it), without the optional web browser and
+This installs exactly version 0.23.3 (`--commit` names it), without the optional web browser and
 computer-control extras, and without starting Hermes's setup questions yet (`--skip-setup`).
 
 ```bash
-bash ~/install-hermes.sh --commit 3b421578588243f920886e6fe79a6faa87ea026e --skip-setup --skip-browser --skip-computer-use
+bash ~/install-hermes.sh --commit caafe5389ae585ef77387a962aee05b1bcf17029 --skip-setup --skip-browser --skip-computer-use
 ```
 
 You should see: `✓ prerequisites ok (git, curl)`, then
 `Cloning ... (main)` and `Cloning into ...` (it downloads the main line first and then switches to
-the pinned version: a later line says `Checking out 3b421578...`). **This step can sit there for a long time with no progress shown** (about 30
-minutes in our test, while it downloads Hermes from GitHub). Do not close the window. Then many
+the pinned version: a later line says `Checking out caafe5389ae5...`). **This step can sit there for a long time with no progress shown** (from
+a few minutes up to about 30 minutes in our tests, while it downloads Hermes from GitHub). Do not close the window. Then many
 lines with `✓`, and at the end `✓ Hermes Agent install complete. Run: hermes` and
 `→ Reload your shell to use hermes: open a new terminal, or run: source ~/.bashrc`.
 Do **not** run `hermes` yet.
@@ -231,8 +231,8 @@ source ~/.bashrc
 hermes --version
 ```
 
-You should see: a first line `Hermes Agent v0.23.1 (2026.9.24) · stable · local 3b4215785882`.
-It may also say `Update available — run 'hermes update'`. **Do not do that** (see below).
+You should see: a first line `Hermes Agent v0.23.3 (2026.9.24) · stable · local caafe5389ae5`.
+A later line says `Up to date`, or, once a newer Hermes is out, `Update available — run 'hermes update'`. **Do not do that** (see below).
 If not: if it says `hermes: command not found`, close the terminal, open a new one (step 3.1) and run
 `hermes --version` again.
 
@@ -426,7 +426,8 @@ followed by the path of the settings file, with your own values.
 hermes plugins enable hearthward-guard
 ```
 
-You should see: `✓ Plugin hearthward-guard enabled.`
+You should see: `✓ Plugin hearthward-guard enabled.` (Hermes may first print
+`→ Installing Python dependencies…` and `✓ Installing Python dependencies`; that is normal.)
 
 ### 4.4 Start Hermes
 
@@ -847,8 +848,9 @@ hermes config set plugins.entries.hearthward-guard.settings.ocr.locale both
 
 ### 8.2 Updating Hermes Agent
 
-Do not. The guard is tested with Hermes Agent 0.23.1 only. When a guard version supports a newer
-Hermes, its notes and this guide will say so and show the new version.
+Do not. The guard is tested with Hermes Agent 0.23.3 and 0.23.1 only. If you installed 0.23.1 with
+an earlier version of this guide, you can stay on it. When a guard version supports a newer Hermes,
+its notes and this guide will say so and show the new version.
 
 ## 9. Uninstalling
 
@@ -886,7 +888,7 @@ Find the message you see, then do what it says. After any fix: restart Hermes
 
 | You see | What it means | What to do |
 |---|---|---|
-| The Hermes installer shows `Cloning into ...` and nothing else for a long time | It is downloading Hermes from GitHub. In our test this took about 30 minutes with no progress shown. | Wait. Do not close the terminal. |
+| The Hermes installer shows `Cloning into ...` and nothing else for a long time | It is downloading Hermes from GitHub. In our tests this took from a few minutes up to about 30 minutes, with no progress shown. | Wait. Do not close the terminal. |
 | `hermes: command not found` | The terminal has not loaded the new command yet. | Close the terminal, open a new one (step 3.1), and try again. |
 | `sha256sum` shows a different number | The file is not the one we tested. | Do not use it. Delete it and download it again. |
 | `hermes --version` says `Update available` | A newer Hermes exists. | Ignore it. Do not update (step 3.6). |
@@ -944,7 +946,7 @@ Find the message you see, then do what it says. After any fix: restart Hermes
 ## 12. Sources checked
 
 The steps that depend on other people's software were checked against these official pages on
-2026-11-18, and the whole English guide was then followed on a fresh Ubuntu 24.04 user (with a
+2026-11-18 (Hermes Agent parts again on 2026-11-19, for 0.23.3), and the whole English guide was then followed on a fresh Ubuntu 24.04 user (with a
 stand-in for the chat app; the llama.cpp download, `llama-server --version`, `/health` and the
 guard's connection to `llama-server` were run for real with a tiny test model):
 
@@ -953,11 +955,12 @@ guard's connection to `llama-server` were run for real with a tiny test model):
   [updating and uninstalling](https://hermes-agent.nousresearch.com/docs/getting-started/updating),
   [WSL quickstart](https://hermes-agent.nousresearch.com/docs/user-guide/windows-wsl-quickstart),
   [Discord setup](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord),
-  the 0.23.1 installer
-  ([`scripts/install.sh` at tag v0.23.1](https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.1/scripts/install.sh))
-  and, in the 0.23.1 source, the plugin guide (`website/docs/user-guide/features/plugins.md`) and
-  the English message texts (`locales/en.yaml`). Tag `v0.23.1` points to commit
-  `3b421578588243f920886e6fe79a6faa87ea026e`.
+  the 0.23.3 installer
+  ([`scripts/install.sh` at tag v0.23.3](https://raw.githubusercontent.com/NousResearch/hermes-agent/v0.23.3/scripts/install.sh))
+  and, in the 0.23.3 source, the plugin guide (`website/docs/user-guide/features/plugins.md`) and
+  the English message texts (`locales/en.yaml`). Tag `v0.23.3` points to commit
+  `caafe5389ae585ef77387a962aee05b1bcf17029`
+  (tag `v0.23.1`, also tested: `3b421578588243f920886e6fe79a6faa87ea026e`).
 - WSL: [Install WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (Microsoft Learn), and
   `wsl --list --online`, which lists `Ubuntu-24.04`.
 - Tesseract: [Installation](https://tesseract-ocr.github.io/tessdoc/Installation.html).

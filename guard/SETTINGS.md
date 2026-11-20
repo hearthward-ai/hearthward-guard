@@ -96,7 +96,7 @@ These are Hermes's own settings, not the guard's. The preflight check fails unti
 | `gateway.strict` | `true` | Limits which files the assistant can send out. Hermes's default is `false`. |
 | `gateway.trust_recent_files` | `false` | Stops the assistant from sending files just because they are new. Hermes's default is `true`. |
 | `platform_toolsets.<platform>` | present for every chat app you use, naming only allowed toolsets | Without an entry, Hermes gives the assistant its default tools on that chat app. The preflight check allows only `no_mcp` unless you pass `--allow-toolset NAME`. |
-| `approvals.mode` | `manual` (recommended) | Hermes 0.23.1 defaults to `smart`, where a model answers tool approval requests. The guard's tool policy (Knock) only asks you when a person answers them. Without `manual`, every "ask" becomes "deny", and preflight prints a `NOTE`. |
+| `approvals.mode` | `manual` (recommended) | Hermes 0.23.1 and 0.23.3 default to `smart`, where a model answers tool approval requests. The guard's tool policy (Knock) only asks you when a person answers them. Without `manual`, every "ask" becomes "deny", and preflight prints a `NOTE`. |
 | `approvals.approvers` | set, and only owners (needed only if your chat app has tools) | On a chat app, Knock asks you only when this names owners and nobody else. Unset (Hermes's default `*`, anyone) means every tool call that needs your approval is refused. Set it with your own user ID: `hermes config set approvals.approvers '["123456789"]'`. |
 | `gateway.platforms.<platform>` admin lists, such as `extra.allow_admin_from` | only owners | Hermes lets admins answer approval requests too. Knock checks that every admin is an owner; if not, "ask" becomes "deny". |
 
